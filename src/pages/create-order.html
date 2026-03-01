@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Management - Create Order</title>
+  <link rel="stylesheet" href="../components/Navbar.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px; 
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .page-content {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .table-container {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .editable {
+      border: 1px solid #ddd;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .editable:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    .order-details {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 25px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .form-row {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .form-row .form-group {
+      flex: 1;
+      width: calc(50% - 15px); /* 50% width minus half of the gap */
+      min-width: 0; /* Prevents flex items from overflowing */
+    }
+    .order-details label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #495057;
+      font-size: 14px;
+    }
+    .order-details input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+      background-color: white;
+      box-sizing: border-box; /* Ensures padding is included in width */
+    }
+    .order-details input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+    }
+    .form-title {
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .availability {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-weight: 400;
+      font-size: small;
+    }
+    .in-stock {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .low-stock {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .out-of-stock {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .product-input-row {
+      background-color: #f8f9fa;
+      border: 1px dashed #ced4da;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .product-input-row:hover {
+      background-color: #e9ecef;
+    }
+    /* Autocomplete styles */
+    .autocomplete-container {  
+      position: relative;
+      width: 100%;
+    }
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid #ddd;
+      border-top: none;
+      z-index: 99;
+      top: 100%;
+      left: 0;
+      right: 0;
+      border-radius: 0 0 6px 6px;
+      background-color: white;
+      max-height: 150px;
+      overflow-y: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .autocomplete-items div {
+      padding: 10px;
+      cursor: pointer;
+    }
+    .autocomplete-items div:hover {
+      background-color: #e9ecef;
+    }
+    .autocomplete-active {
+      background-color: #007bff !important;
+      color: white;
+    }
+    /* Add error message styling */
+    .error-message {
+      color: #dc3545;
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+    .input-error {
+      border-color: #dc3545 !important;
+      background-color: #fff8f8 !important;
+    }
+    .shake-animation {
+      animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    /* Add order summary styles */
+    .order-summary {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .order-summary-label {
+      font-weight: 600;
+      font-size: 16px;
+      margin-right: 15px;
+      color: #495057;
+    }
+    .order-total {
+      font-weight: 700;
+      font-size: 20px;
+      color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <header>
+          <h1>Create New Order</h1>
+        </header>
+        
+        <div class="page-content">
+          <div class="form-container">
+            <h3 class="form-title">Order Details</h3>
+            <div class="order-details">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="orderNumber">Order Number</label>
+                  <input type="text" id="orderNumber" placeholder="Enter order number">
+                </div>
+                <div class="form-group">
+                  <label for="orderDate">Date</label>
+                  <input type="date" id="orderDate" value="">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="agentName">Agent Name</label>
+                  <div class="autocomplete-container">
+                    <input type="text" id="agentName" autocomplete="off">
+                    <div id="agentNameAutocomplete" class="autocomplete-items"></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="customerName">Customer Name</label>
+                  <div class="autocomplete-container">
+                    <input type="text" id="customerName" placeholder="Enter customer name" autocomplete="off" list="customerList">
+                    <datalist id="customerList"></datalist>
+                    <div id="customerNameAutocomplete" class="autocomplete-items"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table id="order-items-table">
+                <thead>
+                  <tr>
+                    <th>Sr Number</th>
+                    <th>Product Code</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Size</th>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                    <th>Availability</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="order-items-body">
+                  <tr>
+                    <td>1</td>
+                    <td><input type="text" class="editable" id="newProductCode" placeholder="Product code"></td>
+                    <td id="newProductName">-</td>
+                    <td id="newProductCategory">-</td>
+                    <td id="newProductSize">-</td>
+                    <td><input type="number" class="editable" id="newProductQuantity" value="" min="0"></td>
+                    <td id="newProductRate">-</td>
+                    <td id="newProductTotal">₹0</td>
+                    <td id="newProductAvailability">-</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Add order summary section -->
+            <div class="order-summary">
+              <span class="order-summary-label">Order Total:</span>
+              <span id="order-total-amount" class="order-total">₹0.00</span>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+              <button class="btn btn-secondary" onclick="window.location.href='sales.html'">Cancel</button>
+              <button class="btn btn-primary" onclick="saveOrder()">Save Order</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/Navbar.js"></script>
+  <script>
+    // Add browser compatibility layer for window.api
+    if (!window.api) {
+      console.log('Running in browser mode - using localStorage API fallback');
+      window.api = {
+        getProducts: async () => {
+          return JSON.parse(localStorage.getItem('products') || '[]');
+        },
+        getInventory: async () => {
+          return JSON.parse(localStorage.getItem('inventory') || '[]');
+        },
+        getAgents: async () => {
+          return JSON.parse(localStorage.getItem('agents') || '[]');
+        },
+        getCustomers: async () => {
+          return JSON.parse(localStorage.getItem('customers') || '[]');
+        },
+        updateInventory: async (data) => {
+          const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          const inventoryIndex = inventory.findIndex(item => item.productId === data.productId);
+          
+          if (inventoryIndex !== -1) { 
+            inventory[inventoryIndex].quantity += data.quantity;
+          }
+          
+          // Also record a transaction for tracking
+          const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+          transactions.push({
+            id: transactions.length + 1,
+            type: 'inventory',
+            productId: data.productId,
+            quantity: data.quantity,
+            location: data.location || 'Main Warehouse',
+            createdBy: data.userId || 1,
+            timestamp: new Date().toISOString()
+          });
+          
+          localStorage.setItem('inventory', JSON.stringify(inventory));
+          localStorage.setItem('transactions', JSON.stringify(transactions));
+          return { success: true };
+        }
+      };
+      
+      // Sample data for browser mode
+      if (!localStorage.getItem('agents')) {
+        const sampleAgents = [
+          { id: 1, name: 'John Smith', email: 'john@example.com', phone: '123-456-7890' },
+          { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', phone: '234-567-8901' },
+          { id: 3, name: 'Michael Brown', email: 'michael@example.com', phone: '345-678-9012' }
+        ];
+        localStorage.setItem('agents', JSON.stringify(sampleAgents));
+      }
+      
+      if (!localStorage.getItem('customers')) {
+        const sampleCustomers = [
+          { id: 1, name: 'Acme Corporation', contact: 'David Johnson', email: 'david@acme.com', agentName: 'John Smith' },
+          { id: 2, name: 'Global Industries', contact: 'Emily Wilson', email: 'emily@global.com', agentName: 'Sarah Johnson' },
+          { id: 3, name: 'Tech Solutions', contact: 'Robert Chen', email: 'robert@tech.com', agentName: 'Michael Brown' }
+        ];
+        localStorage.setItem('customers', JSON.stringify(sampleCustomers));
+      }
+    }
+
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = 'login.html';
+    }
+
+    let orderItems = [];
+    let products = [];
+    let productInventory = {};
+    let agents = [];
+    let customers = [];
+    
+    // Function to initialize the page
+    async function initPage() {
+      // Load data from API or localStorage
+      try {
+        // Load products and inventory
+        products = await window.api.getProducts();
+        const inventory = await window.api.getInventory();
+        
+        // Create product inventory map
+        inventory.forEach(item => {
+          productInventory[item.code] = {
+            stock: item.quantity || 0,
+            location: item.location || 'Main Warehouse',
+            lastUpdated: new Date().toISOString().slice(0, 10)
+          };
+        });
+        
+        // Load agents and customers for autocomplete
+        agents = await window.api.getAgents();
+        customers = await window.api.getCustomers();
+        
+        // Populate customer dropdown list
+        const customerList = document.getElementById('customerList');
+        customerList.innerHTML = '';
+        customers.forEach(customer => {
+          const option = document.createElement('option');
+          option.value = customer.name;
+          customerList.appendChild(option);
+        });
+        
+        // Add event listener for customer name input to auto-populate agent
+        document.getElementById('customerName').addEventListener('change', function() {
+          const selectedCustomer = customers.find(c => c.name === this.value);
+          if (selectedCustomer && (selectedCustomer.agent || selectedCustomer.agentName)) {
+            document.getElementById('agentName').value = selectedCustomer.agent || selectedCustomer.agentName;
+          }
+        });
+        
+        // Load order number
+        let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        document.getElementById('orderNumber').value = 'ORD-' + (orders.length + 1).toString().padStart(3, '0');
+        document.getElementById('orderDate').valueAsDate = new Date();
+        
+        // Initialize with one input row
+        renderOrderItems();
+      } catch (error) {
+        console.error('Error initializing page:', error);
+        // Fallback to local data if API fails
+        products = [
+      { code: 'P001', name: 'Product 1', category: 'Electronics', size: 'M', price: 1200 },
+      { code: 'P002', name: 'Product 2', category: 'Clothing', size: 'L', price: 850 },
+      { code: 'P003', name: 'Product 3', category: 'Home', size: 'S', price: 450 },
+      { code: 'P004', name: 'Product 4', category: 'Electronics', size: 'XL', price: 2500 }
+    ];
+
+        productInventory = {
+      'P001': { stock: 120, supplier: 'ABC Suppliers', lastUpdated: '2023-05-15' },
+      'P002': { stock: 45, supplier: 'XYZ Distributors', lastUpdated: '2023-05-10' },
+      'P003': { stock: 8, supplier: 'Premium Products', lastUpdated: '2023-05-12' },
+      'P004': { stock: 0, supplier: 'Global Vendors', lastUpdated: '2023-05-05' }
+    };
+
+        // Fallback for agents and customers
+        agents = [
+          { id: 1, name: 'John Smith' },
+          { id: 2, name: 'Sarah Johnson' }
+        ];
+        
+        customers = [
+          { id: 1, name: 'Acme Corporation', agentName: 'John Smith' },
+          { id: 2, name: 'Global Industries', agentName: 'Sarah Johnson' }
+        ];
+        
+        // Populate customer dropdown list in fallback mode
+        const customerList = document.getElementById('customerList');
+        customerList.innerHTML = '';
+        customers.forEach(customer => {
+          const option = document.createElement('option');
+          option.value = customer.name;
+          customerList.appendChild(option);
+        });
+        
+      // Load order number
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      document.getElementById('orderNumber').value = 'ORD-' + (orders.length + 1).toString().padStart(3, '0');
+      document.getElementById('orderDate').valueAsDate = new Date();
+        
+        // Initialize with one input row
+        renderOrderItems();
+      }
+    }
+    
+    // Autocomplete function
+    function setupAutocomplete(inputElement, arr, dropdownId, relatedFieldId, relatedData) {
+      inputElement.addEventListener("input", function() {
+        let val = this.value;
+        closeAllLists();
+        
+        if (!val) { return false; }
+        
+        const filteredItems = arr.filter(item => 
+          item.toLowerCase().includes(val.toLowerCase())
+        );
+        
+        const dropdownElement = document.getElementById(dropdownId);
+        dropdownElement.innerHTML = '';
+        
+        filteredItems.forEach(item => {
+          const div = document.createElement("div");
+          div.innerHTML = item;
+          div.addEventListener("click", function() {
+            inputElement.value = this.innerHTML;
+            closeAllLists();
+            
+            // Automatically fill related agent field
+            if (relatedFieldId && relatedData) {
+              const relatedField = document.getElementById(relatedFieldId);
+              const selectedCustomer = relatedData.find(data => data.name === this.innerHTML);
+              if (selectedCustomer && selectedCustomer.agent) {
+                // Use agent property from the customer data
+                relatedField.value = selectedCustomer.agent;
+              } else if (selectedCustomer && selectedCustomer.agentName) {
+                // Fallback to agentName property if agent is not found
+                relatedField.value = selectedCustomer.agentName;
+              }
+            }
+          });
+          dropdownElement.appendChild(div);
+        });
+        
+        dropdownElement.style.display = filteredItems.length > 0 ? "block" : "none";
+      });
+      
+      document.addEventListener("click", function(e) {
+        if (e.target !== inputElement) {
+          closeAllLists();
+        }
+      });
+    }
+    
+    // Close all autocomplete lists
+    function closeAllLists() {
+      const items = document.getElementsByClassName("autocomplete-items");
+      for (let i = 0; i < items.length; i++) {
+        items[i].style.display = "none";
+      }
+    }
+
+    // Function to get availability class
+    function getAvailabilityClass(stock) {
+      if (stock === 0) return 'out-of-stock';
+      if (stock < 10) return 'low-stock';
+      return 'in-stock';
+    }
+
+    // Function to get availability text
+    function getAvailabilityText(stock) {
+      if (stock === 0) return 'Out of Stock';
+      if (stock < 10) return 'Low Stock';
+      return 'In Stock';
+    }
+
+    // Function to update order total
+    function updateOrderTotal() {
+      const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+      document.getElementById('order-total-amount').textContent = `₹${totalAmount.toFixed(2)}`;
+    }
+
+    // Function to add item to current order
+    function addItemToOrder() {
+      const productCode = document.getElementById('newProductCode').value;
+      const quantity = parseInt(document.getElementById('newProductQuantity').value) || 0;
+      
+      if (!productCode) {
+        showError('newProductCode', 'Please enter a product code');
+        return;
+      }
+      
+      // Check if product code already exists in the order
+      const existingProduct = orderItems.find(item => item.productCode === productCode);
+      if (existingProduct) {
+        showError('newProductCode', `Product code "${productCode}" is already in your order. Please use a different product.`);
+        return;
+      }
+      
+      const product = products.find(p => p.code === productCode);
+      if (!product) {
+        showError('newProductCode', 'Product not found. Please check the product code.');
+        return;
+      }
+      
+      if (quantity <= 0) {
+        showError('newProductQuantity', 'Please enter a valid quantity');
+        return;
+      }
+
+      // Check stock availability
+      const stock = productInventory[productCode]?.stock || 0;
+      if (stock === 0) {
+        showError('newProductQuantity', 'This product is out of stock. Please select a different product.');
+        return;
+      }
+      
+      if (quantity > stock) {
+        showError('newProductQuantity', `Only ${stock} units available in stock. Please adjust the quantity.`);
+        return;
+      }
+      
+      // Clear any previous errors
+      clearErrors();
+      
+      const total = product.price * quantity;
+      
+      // Update local inventory immediately for live stock tracking
+      productInventory[productCode].stock -= quantity;
+      
+      orderItems.push({
+        srNumber: orderItems.length + 1,
+        productCode: product.code,
+        name: product.name,
+        category: product.category,
+        size: product.size,
+        quantity: quantity,
+        rate: product.price,
+        total: total,
+        stock: productInventory[productCode].stock // Use updated stock value
+      });
+      
+      renderOrderItems();
+      updateOrderTotal(); // Update the order total
+      
+      // Update all instances of this product in the UI to reflect new stock levels
+      updateProductStockDisplay(productCode);
+      
+      // Focus on the new product code input field
+      setTimeout(() => {
+        const newProductCodeInput = document.getElementById('newProductCode');
+        if (newProductCodeInput) {
+          newProductCodeInput.focus();
+        }
+      }, 0);
+    }
+    
+    // Function to show error message
+    function showError(inputId, message) {
+      const input = document.getElementById(inputId);
+      input.classList.add('input-error', 'shake-animation');
+      
+      // Create or update error message
+      let errorElement = document.getElementById(`${inputId}-error`);
+      if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.id = `${inputId}-error`;
+        errorElement.className = 'error-message';
+        input.parentNode.insertBefore(errorElement, input.nextSibling);
+      }
+      
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+      
+      // Remove shake animation after it completes
+      setTimeout(() => {
+        input.classList.remove('shake-animation');
+      }, 500);
+      
+      // Focus on the input
+      input.focus();
+    }
+    
+    // Function to clear all errors
+    function clearErrors() {
+      const errorElements = document.querySelectorAll('.error-message');
+      const errorInputs = document.querySelectorAll('.input-error');
+      
+      errorElements.forEach(el => {
+        el.style.display = 'none';
+      });
+      
+      errorInputs.forEach(input => {
+        input.classList.remove('input-error');
+      });
+    }
+
+    // Function to update product info when code is entered
+    document.getElementById('newProductCode').addEventListener('change', function() {
+      const productCode = this.value;
+      const product = products.find(p => p.code === productCode);
+      
+      // Check if product code already exists in the order
+      const existingProduct = orderItems.find(item => item.productCode === productCode);
+      if (existingProduct) {
+        showError('newProductCode', `Product code "${productCode}" is already in your order. Please use a different product.`);
+        return;
+      } else {
+        clearErrors();
+      }
+      
+      if (product) {
+        document.getElementById('newProductName').textContent = product.name;
+        document.getElementById('newProductCategory').textContent = product.category;
+        document.getElementById('newProductSize').textContent = product.size;
+        document.getElementById('newProductRate').textContent = '₹' + product.price;
+        
+        const stock = productInventory[productCode]?.stock || 0;
+        const availabilityClass = getAvailabilityClass(stock);
+        const availabilityText = getAvailabilityText(stock);
+        document.getElementById('newProductAvailability').innerHTML = 
+          `<span class="availability ${availabilityClass}">${availabilityText} (${stock})</span>`;
+      } else {
+        document.getElementById('newProductName').textContent = '-';
+        document.getElementById('newProductCategory').textContent = '-';
+        document.getElementById('newProductSize').textContent = '-';
+        document.getElementById('newProductRate').textContent = '-';
+        document.getElementById('newProductAvailability').textContent = '-';
+      }
+    });
+
+    // Function to update total when quantity is changed
+    document.getElementById('newProductQuantity').addEventListener('change', function() {
+      const quantity = parseInt(this.value) || 0;
+      const productCode = document.getElementById('newProductCode').value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        const total = product.price * quantity;
+        document.getElementById('newProductTotal').textContent = '₹' + total;
+        
+        // Validate quantity against available stock
+        const stock = productInventory[productCode]?.stock || 0;
+        if (quantity > stock) {
+          showError('newProductQuantity', `Only ${stock} units available in stock. Please adjust the quantity.`);
+        } else if (quantity <= 0) {
+          showError('newProductQuantity', 'Please enter a valid quantity');
+        } else {
+          clearErrors();
+        }
+      }
+    });
+
+    // Function to render order items
+    function renderOrderItems() {
+      const tbody = document.getElementById('order-items-body');
+      
+      // Remove all existing rows
+      tbody.innerHTML = '';
+      
+      // Add the order items
+      orderItems.forEach(item => {
+        const row = document.createElement('tr');
+        const availabilityClass = getAvailabilityClass(item.stock);
+        const availabilityText = getAvailabilityText(item.stock);
+        
+        row.innerHTML = `
+          <td>${item.srNumber}</td>
+          <td>${item.productCode}</td>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>${item.size}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.rate}</td>
+          <td>₹${item.total}</td>
+          <td><span class="availability ${availabilityClass}">${availabilityText} (${item.stock})</span></td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="removeOrderItem(${item.srNumber})">Remove</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Add the input row
+      const inputRow = document.createElement('tr');
+      inputRow.innerHTML = `
+        <td>${orderItems.length + 1}</td>
+        <td>
+          <input type="text" class="editable" id="newProductCode" placeholder="Product code">
+          <div id="newProductCode-error" class="error-message"></div>
+        </td>
+        <td id="newProductName">-</td>
+        <td id="newProductCategory">-</td>
+        <td id="newProductSize">-</td>
+        <td>
+          <input type="number" class="editable" id="newProductQuantity" value="" min="0">
+          <div id="newProductQuantity-error" class="error-message"></div>
+        </td>
+        <td id="newProductRate">-</td>
+        <td id="newProductTotal">₹0</td>
+        <td id="newProductAvailability">-</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="addItemToOrder()">Add</button>
+        </td>
+      `;
+      tbody.appendChild(inputRow);
+
+      // Add event listeners for the new input row
+      document.getElementById('newProductCode').addEventListener('change', function() {
+        const productCode = this.value;
+        
+        // Check if product code already exists in the order
+        const existingProduct = orderItems.find(item => item.productCode === productCode);
+        if (existingProduct) {
+          showError('newProductCode', `Product code "${productCode}" is already in your order. Please use a different product.`);
+          return;
+        } else {
+          clearErrors();
+        }
+        
+        const product = products.find(p => p.code === productCode);
+        
+        if (product) {
+          document.getElementById('newProductName').textContent = product.name;
+          document.getElementById('newProductCategory').textContent = product.category;
+          document.getElementById('newProductSize').textContent = product.size;
+          document.getElementById('newProductRate').textContent = '₹' + product.price;
+          
+          const stock = productInventory[productCode]?.stock || 0;
+          const availabilityClass = getAvailabilityClass(stock);
+          const availabilityText = getAvailabilityText(stock);
+          document.getElementById('newProductAvailability').innerHTML = 
+            `<span class="availability ${availabilityClass}">${availabilityText} (${stock})</span>`;
+            
+          // Move focus to quantity field after valid product code
+          document.getElementById('newProductQuantity').focus();
+        } else {
+          document.getElementById('newProductName').textContent = '-';
+          document.getElementById('newProductCategory').textContent = '-';
+          document.getElementById('newProductSize').textContent = '-';
+          document.getElementById('newProductRate').textContent = '-';
+          document.getElementById('newProductAvailability').textContent = '-';
+        }
+      });
+
+      // Add keyboard event support for product code input
+      document.getElementById('newProductCode').addEventListener('keydown', function(e) {
+        // When user presses Enter in product code field, move to quantity field
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const productCode = this.value;
+          const product = products.find(p => p.code === productCode);
+          if (product) {
+            document.getElementById('newProductQuantity').focus();
+          }
+        }
+      });
+
+      document.getElementById('newProductQuantity').addEventListener('change', function() {
+        const quantity = parseInt(this.value) || 0;
+        const productCode = document.getElementById('newProductCode').value;
+        const product = products.find(p => p.code === productCode);
+        
+        if (product) {
+          const total = product.price * quantity;
+          document.getElementById('newProductTotal').textContent = '₹' + total;
+          
+          // Validate quantity against available stock
+          const stock = productInventory[productCode]?.stock || 0;
+          if (quantity > stock) {
+            showError('newProductQuantity', `Only ${stock} units available in stock. Please adjust the quantity.`);
+          } else if (quantity <= 0) {
+            showError('newProductQuantity', 'Please enter a valid quantity');
+          } else {
+            clearErrors();
+          }
+        }
+      });
+      
+      // Add keyboard event support for quantity input
+      document.getElementById('newProductQuantity').addEventListener('keydown', function(e) {
+        // When user presses Enter in quantity field, trigger the Add button
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addItemToOrder();
+        }
+      });
+      
+      // Set focus to the new product code input field after rendering
+      setTimeout(() => {
+        document.getElementById('newProductCode').focus();
+      }, 50);
+    }
+    
+    // Function to remove order item
+    function removeOrderItem(srNumber) {
+      // Find the item to remove
+      const removedItem = orderItems.find(item => item.srNumber === srNumber);
+      
+      // Add back the quantity to inventory
+      if (removedItem) {
+        productInventory[removedItem.productCode].stock += removedItem.quantity;
+        // Update the display of this product in all locations
+        updateProductStockDisplay(removedItem.productCode);
+      }
+      
+      orderItems = orderItems.filter(item => item.srNumber !== srNumber);
+      
+      // Recalculate srNumbers
+      orderItems = orderItems.map((item, index) => ({
+        ...item,
+        srNumber: index + 1
+      }));
+      
+      renderOrderItems();
+      updateOrderTotal(); // Update the order total
+    }
+    
+    // Function to update product stock display throughout the UI
+    function updateProductStockDisplay(productCode) {
+      const stock = productInventory[productCode]?.stock || 0;
+      const availabilityClass = getAvailabilityClass(stock);
+      const availabilityText = getAvailabilityText(stock);
+      
+      // Update the product availability in the input row if it's the same product
+      const currentProductCode = document.getElementById('newProductCode').value;
+      if (currentProductCode === productCode) {
+        document.getElementById('newProductAvailability').innerHTML = 
+          `<span class="availability ${availabilityClass}">${availabilityText} (${stock})</span>`;
+      }
+      
+      // Update all instances in the order items table
+      const rows = document.getElementById('order-items-body').getElementsByTagName('tr');
+      for (let i = 0; i < rows.length - 1; i++) { // Skip the last row (input row)
+        const row = rows[i];
+        const cells = row.getElementsByTagName('td');
+        if (cells[1] && cells[1].textContent === productCode) {
+          // Update the availability cell (index 8)
+          cells[8].innerHTML = `<span class="availability ${availabilityClass}">${availabilityText} (${stock})</span>`;
+        }
+      }
+    }
+    
+    // Function to broadcast order updates to other pages
+    function broadcastOrderUpdate(action, order) {
+      // Create a custom event that can be listened to by other pages
+      const event = new CustomEvent('order-update', {
+        detail: { action, order }
+      });
+      
+      // Dispatch the event to window for local updates
+      window.dispatchEvent(event);
+      
+      // Also store latest version in sessionStorage for cross-page updates
+      const timestamp = new Date().getTime();
+      sessionStorage.setItem('order-update-timestamp', timestamp.toString());
+      sessionStorage.setItem('order-update-action', action);
+      sessionStorage.setItem('order-update-data', JSON.stringify(order));
+    }
+    
+    // Function to save order
+    async function saveOrder() {
+      const orderNumber = document.getElementById('orderNumber').value;
+      const orderDate = document.getElementById('orderDate').value;
+      const customerName = document.getElementById('customerName').value;
+      const agentName = document.getElementById('agentName').value;
+      
+      // Validate order details
+      if (!orderNumber || !orderDate || !customerName || !agentName) {
+        alert('Please fill in all order details (Order Number, Date, Customer Name, and Agent Name)');
+        return;
+      }
+      
+      // Validate if at least one product is added
+      if (orderItems.length === 0) {
+        alert('Please add at least one product to the order');
+        return;
+      }
+      
+      // Validate each product in the order
+      for (const item of orderItems) {
+        if (!item.productCode || !item.name || item.quantity <= 0) {
+          alert('Please ensure all product details are filled correctly');
+          return;
+        }
+      }
+      
+      const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+      
+      const newOrder = {
+        id: orderNumber,
+        date: orderDate,
+        customerName: customerName,
+        assigned_agent: agentName,
+        agentName: agentName,
+        items: orderItems,
+        totalItems: orderItems.length,
+        totalAmount: totalAmount,
+        status: 'pending'
+      };
+      
+      try {
+        // Get current user for created_by field
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+        const userId = user.id || 1; // Default to user ID 1 if not available
+        
+        // Update inventory for each ordered item
+        for (const item of orderItems) {
+          const product = products.find(p => p.code === item.productCode);
+          if (product) {
+            // Update inventory - negative quantity because we're reducing stock
+            await window.api.updateInventory({
+              productId: product.id,
+              quantity: -item.quantity,
+              location: productInventory[item.productCode]?.location || 'Main Warehouse',
+              userId: userId // Add the userId parameter
+            });
+            
+            // Also update local inventory object for consistency
+            if (productInventory[item.productCode]) {
+              productInventory[item.productCode].stock -= item.quantity;
+            }
+          }
+        }
+      
+      // Get existing orders from localStorage
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      orders.push(newOrder);
+      
+      // Save back to localStorage
+      localStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Broadcast the order update to other pages
+        broadcastOrderUpdate('add', newOrder);
+      
+      alert('Order saved successfully!');
+      resetOrderForm();
+      window.location.href = 'sales.html';
+      } catch (error) {
+        console.error('Error saving order:', error);
+        alert('Failed to save order. Please try again.');
+      }
+    }
+
+    // Listen for product updates from product.html page
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'product-update-timestamp') {
+        console.log('Detected product changes in create-order page, refreshing product data');
+        refreshProductData();
+      }
+    });
+    
+    // Function to refresh product data without rebuilding the entire page
+    async function refreshProductData() {
+      try {
+        // Load updated products
+        products = await window.api.getProducts();
+        const inventory = await window.api.getInventory();
+        
+        // Update product inventory map
+        inventory.forEach(item => {
+          productInventory[item.code] = {
+            stock: item.quantity || 0,
+            location: item.location || 'Main Warehouse',
+            lastUpdated: new Date().toISOString().slice(0, 10)
+          };
+        });
+        
+        // If product code field is filled, update the product info display
+        const productCode = document.getElementById('newProductCode').value;
+        if (productCode) {
+          const product = products.find(p => p.code === productCode);
+          if (product) {
+            document.getElementById('newProductName').textContent = product.name;
+            document.getElementById('newProductCategory').textContent = product.category || '-';
+            document.getElementById('newProductSize').textContent = product.size || '-';
+            document.getElementById('newProductRate').textContent = '₹' + product.price;
+            
+            // Update quantity input with max available stock
+            const inventory = productInventory[product.code];
+            if (inventory) {
+              const maxQuantity = inventory.stock;
+              
+              // Add a visual indicator of stock availability
+              const stockInfo = document.createElement('small');
+              stockInfo.id = 'stock-info';
+              stockInfo.style.display = 'block';
+              stockInfo.style.marginTop = '5px';
+              
+              if (maxQuantity === 0) {
+                stockInfo.style.color = '#dc3545';
+                stockInfo.textContent = 'Out of stock';
+              } else if (maxQuantity < 10) {
+                stockInfo.style.color = '#ffc107';
+                stockInfo.textContent = `Low stock: ${maxQuantity} available`;
+              } else {
+                stockInfo.style.color = '#28a745';
+                stockInfo.textContent = `In stock: ${maxQuantity} available`;
+              }
+              
+              // Remove previous stock info if exists
+              const oldStockInfo = document.getElementById('stock-info');
+              if (oldStockInfo) {
+                oldStockInfo.remove();
+              }
+              
+              document.getElementById('newProductQuantity').after(stockInfo);
+            }
+          }
+        }
+        
+        // Also refresh the order items table to update product information
+        renderOrderItems();
+        
+        console.log('Product data refreshed successfully');
+      } catch (error) {
+        console.error('Error refreshing product data:', error);
+      }
+    }
+    
+    // Check for product updates periodically
+    setInterval(() => {
+      const lastUpdateTime = sessionStorage.getItem('last-create-order-product-check');
+      const currentUpdateTime = sessionStorage.getItem('product-update-timestamp');
+      
+      if (lastUpdateTime !== currentUpdateTime && currentUpdateTime) {
+        console.log('Detected product changes, refreshing data');
+        sessionStorage.setItem('last-create-order-product-check', currentUpdateTime);
+        refreshProductData();
+      }
+    }, 5000);
+
+    // Initialize page when loaded
+    window.onload = async function() {
+      await initPage();
+      // Set agent name from session storage if available
+      const user = JSON.parse(sessionStorage.getItem('user'));
+      if (user) {
+        document.getElementById('agentName').value = user.name;
+      }
+      
+      // Initialize order total
+      updateOrderTotal();
+    };
+
+    // Ensure text inputs are writable after saving an order
+    function resetOrderForm() {
+      document.getElementById('orderNumber').value = '';
+      document.getElementById('orderDate').value = '';
+      document.getElementById('agentName').value = '';
+      document.getElementById('customerName').value = '';
+      orderItems = [];
+      renderOrderItems();
+    }
+  </script>
+</body>
+</html> 

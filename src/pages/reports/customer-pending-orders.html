@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Pending Orders Report</title>
+  <link rel="stylesheet" href="../../components/Navbar.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+    .btn-primary {
+      background-color: #4a6cf7;
+      color: white;
+    }
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #4a6cf7;
+      color: #4a6cf7;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      color: #4a6cf7;
+      margin-bottom: 20px;
+    }
+    .report-table-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .report-table th {
+      background-color: #f5f5f5;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .report-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .report-filters {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      margin-bottom: 0;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+      font-size: 14px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 80px;
+    }
+    .status-badge-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .status-badge-completed {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 16px;
+      color: #666;
+    }
+    .no-data {
+      text-align: center;
+      padding: 30px;
+      font-size: 16px;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <a href="../reports.html" class="back-link">← Back to Reports</a>
+        
+        <header>
+          <h1>Pending Orders</h1>
+          <div class="header-actions">
+            <button id="refresh-btn" class="btn btn-secondary">Refresh Data</button>
+            <button id="export-pdf-btn" class="btn btn-outline">Export PDF</button>
+            <button id="export-excel-btn" class="btn btn-primary">Export Excel</button>
+          </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="report-filters">
+          <div class="filter-grid">
+            <div class="form-group">
+              <label for="agent">Sales Agent</label>
+              <select id="agent">
+                <option value="">All Agents</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="date-range">Date Range</label>
+              <select id="date-range">
+                <option value="today">Today</option>
+                <option value="this-week">This Week</option>
+                <option value="this-month" selected>This Month</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Table -->
+        <div class="report-table-container">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Estimate ID</th>
+                <th>Date</th>
+                <th>Customer Name</th>
+                <th>Agent Name</th>
+                <th>Total Items</th>
+                <th>Total Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pending-orders-table">
+              <tr>
+                <td colspan="8" class="loading">Loading pending orders...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../components/Navbar.js"></script>
+  <script>
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = '../login.html';
+    }
+
+    // Initialize variables
+    let pendingEstimates = [];
+    let allAgents = [];
+    let filteredEstimates = [];
+
+    // Helper to get nested value from object
+    function getNestedValue(obj, path) {
+      return path.split('.').reduce((current, key) => current && current[key], obj);
+    }
+
+    // Get agent name from estimate (checks assigned_agent, agentName, etc.)
+    function getAgentNameFromEstimate(estimate) {
+      const agentFields = [
+        'assigned_agent', 'agentName', 'agent', 'assignedAgent', 'createdBy', 'salesAgent',
+        'userId', 'userName', 'employeeName', 'salesperson', 'representative',
+        'createdByName', 'assignedTo', 'handledBy', 'createdByUser', 'assignedUser', 'salesPerson'
+      ];
+      for (const field of agentFields) {
+        const value = field.includes('.') ? getNestedValue(estimate, field) : estimate[field];
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          return value.trim();
+        }
+      }
+      return null;
+    }
+
+    // Get customer name from estimate (checks customerName, customer, etc.)
+    function getCustomerNameFromEstimate(estimate) {
+      const customerFields = [
+        'customerName', 'customer', 'clientName', 'client', 'customerDetails',
+        'customer.name', 'clientDetails.name', 'buyerName'
+      ];
+      for (const field of customerFields) {
+        const value = field.includes('.') ? getNestedValue(estimate, field) : estimate[field];
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          return value.trim();
+        }
+      }
+      return null;
+    }
+
+    // Get estimate date from various possible fields
+    function getEstimateDate(estimate) {
+      const dateFields = ['date', 'createdAt', 'estimateDate', 'created_at'];
+      for (const field of dateFields) {
+        if (estimate[field]) {
+          const date = new Date(estimate[field]);
+          if (!isNaN(date.getTime())) return date;
+        }
+      }
+      return new Date();
+    }
+
+    // Function to load estimates from localStorage
+    function loadEstimates() {
+      try {
+        const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+        
+        // Filter only pending estimates
+        pendingEstimates = estimates.filter(estimate => {
+          const status = (estimate.status || '').toLowerCase();
+          return status === 'pending' || status === '' || !estimate.status;
+        });
+        
+        // Extract unique agents for filter
+        const agents = new Set();
+        pendingEstimates.forEach(estimate => {
+          const agentName = getAgentNameFromEstimate(estimate);
+          if (agentName) agents.add(agentName);
+        });
+        allAgents = Array.from(agents).sort((a, b) => (a || '').localeCompare(b || ''));
+        
+        // Initialize with all pending estimates
+        filteredEstimates = [...pendingEstimates];
+        
+        // Populate filters
+        populateFilters();
+        
+        // Render the table
+        renderPendingOrders(filteredEstimates);
+        
+        return true;
+      } catch (error) {
+        console.error('Error loading estimates:', error);
+        document.getElementById('pending-orders-table').innerHTML = `
+          <tr>
+            <td colspan="8" class="no-data">Error loading data. Please try again.</td>
+          </tr>
+        `;
+        return false;
+      }
+    }
+
+    // Function to populate Sales Agent dropdown
+    function populateFilters() {
+      const agentSelect = document.getElementById('agent');
+      agentSelect.innerHTML = '<option value="">All Agents</option>';
+      allAgents.forEach(agent => {
+        const option = document.createElement('option');
+        option.value = agent;
+        option.textContent = agent;
+        agentSelect.appendChild(option);
+      });
+    }
+
+    // Function to apply filters (runs when agent or date range changes)
+    function applyFilters() {
+      const dateRangeFilter = document.getElementById('date-range').value;
+      const agentFilter = (document.getElementById('agent').value || '').trim();
+      
+      let filtered = [...pendingEstimates];
+      
+      // Apply agent filter
+      if (agentFilter) {
+        filtered = filtered.filter(estimate => {
+          const name = getAgentNameFromEstimate(estimate);
+          return name !== null && name.trim() === agentFilter;
+        });
+      }
+      
+      // Apply date filter
+      if (dateRangeFilter && dateRangeFilter !== 'all') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        filtered = filtered.filter(estimate => {
+          const estimateDate = getEstimateDate(estimate);
+          estimateDate.setHours(0, 0, 0, 0);
+          
+          switch (dateRangeFilter) {
+            case 'today':
+              return estimateDate.getTime() === today.getTime();
+            case 'this-week':
+              return estimateDate >= startOfWeek && estimateDate <= today;
+            case 'this-month':
+              return estimateDate >= startOfMonth && estimateDate <= today;
+            default:
+              return true;
+          }
+        });
+      }
+      
+      // Update filtered estimates and render
+      filteredEstimates = filtered;
+      renderPendingOrders(filteredEstimates);
+    }
+
+    // Function to render pending orders
+    function renderPendingOrders(orders) {
+      const tableBody = document.getElementById('pending-orders-table');
+      tableBody.innerHTML = '';
+
+      if (orders.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="no-data">No pending orders found</td>
+          </tr>
+        `;
+        return;
+      }
+
+      orders.forEach(order => {
+        const row = document.createElement('tr');
+        
+        const orderDate = getEstimateDate(order).toLocaleDateString();
+        const customerName = getCustomerNameFromEstimate(order) || 'N/A';
+        const agentName = getAgentNameFromEstimate(order) || 'N/A';
+        const totalItems = order.totalItems != null ? order.totalItems : (order.items && order.items.length) || 0;
+        const totalAmount = parseFloat(order.totalAmount) || 0;
+        
+        const statusClass = (order.status === 'completed' || order.status === 'packed') ? 
+          'status-badge-completed' : 'status-badge-pending';
+        const statusText = (order.status === 'completed' || order.status === 'packed') ? 
+          'Completed' : 'Pending';
+        
+        const safeId = (order.id != null ? order.id : order.estimate_no || '').toString().replace(/'/g, "\\'");
+        
+        row.innerHTML = `
+          <td>${order.id != null ? order.id : order.estimate_no || '—'}</td>
+          <td>${orderDate}</td>
+          <td>${customerName}</td>
+          <td>${agentName}</td>
+          <td>${totalItems}</td>
+          <td>₹${totalAmount.toFixed(2)}</td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td>
+            <button class="btn btn-outline" onclick="viewEstimate('${safeId}')">View</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Function to view estimate details
+    function viewEstimate(estimateId) {
+      // Store the ID in sessionStorage to be used by the sales page
+      sessionStorage.setItem('view-estimate-id', estimateId);
+      
+      // Navigate to sales page which will show the estimate
+      window.location.href = '../sales.html?view=estimate&id=' + estimateId;
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEstimates();
+      
+      // When agent or date range changes, update table immediately
+      document.getElementById('agent').addEventListener('change', applyFilters);
+      document.getElementById('date-range').addEventListener('change', applyFilters);
+      
+      document.getElementById('refresh-btn').addEventListener('click', () => {
+        document.getElementById('pending-orders-table').innerHTML = `
+          <tr>
+            <td colspan="8" class="loading">Refreshing data...</td>
+          </tr>
+        `;
+        setTimeout(() => {
+          loadEstimates();
+        }, 500);
+      });
+    });
+
+    // Listen for storage events to refresh data when estimates are updated
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'estimates' || event.key === 'estimate-update-timestamp') {
+        console.log('Detected estimate changes, refreshing data');
+        loadEstimates();
+      }
+    });
+
+    // Export handlers
+    document.getElementById('export-pdf-btn').addEventListener('click', () => {
+      alert('PDF export functionality would be implemented here');
+    });
+
+    document.getElementById('export-excel-btn').addEventListener('click', () => {
+      alert('Excel export functionality would be implemented here');
+    });
+  </script>
+</body>
+</html> 

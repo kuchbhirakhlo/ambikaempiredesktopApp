@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Wise Estimates Report</title>
+  <link rel="stylesheet" href="../../components/Navbar.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+    .btn-primary {
+      background-color: #4a6cf7;
+      color: white;
+    }
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #4a6cf7;
+      color: #4a6cf7;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      color: #4a6cf7;
+      margin-bottom: 20px;
+    }
+    .report-table-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .report-table th {
+      background-color: #f5f5f5;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .report-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .report-filters {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      margin-bottom: 0;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+      font-size: 14px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .summary-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .summary-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #666;
+    }
+    .summary-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #4a6cf7;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 80px;
+    }
+    .status-badge-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .status-badge-completed {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 16px;
+      color: #666;
+    }
+    .no-data {
+      text-align: center;
+      padding: 30px;
+      font-size: 16px;
+      color: #666;
+      font-style: italic;
+    }
+    .agent-section {
+      margin-bottom: 30px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .agent-header {
+      background-color: #f0f4ff;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e0e6ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .agent-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #4a6cf7;
+    }
+    .agent-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .agent-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .agent-stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+    .agent-stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <a href="../reports.html" class="back-link">← Back to Reports</a>
+        
+        <header>
+          <h1>Agent Wise Estimates</h1>
+          <div class="header-actions">
+            <button id="refresh-btn" class="btn btn-secondary">Refresh Data</button>
+            <button id="debug-btn" class="btn btn-secondary">Debug Agent Info</button>
+            <button id="export-pdf-btn" class="btn btn-outline">Export PDF</button>
+            <button id="export-excel-btn" class="btn btn-primary">Export Excel</button>
+          </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <div class="summary-card">
+            <h3>Total Estimates</h3>
+            <div id="total-estimates" class="summary-value">0</div>
+          </div>
+          <div class="summary-card">
+            <h3>Total Value</h3>
+            <div id="total-value" class="summary-value">₹0</div>
+          </div>
+          <div class="summary-card">
+            <h3>Total Agents</h3>
+            <div id="total-agents" class="summary-value">0</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="report-filters">
+          <div class="filter-grid">
+            <div class="form-group">
+              <label for="agent">Agent</label>
+              <select id="agent-filter">
+                <option value="">All Agents</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="date-range">Date Range</label>
+              <select id="date-range">
+                <option value="today">Today</option>
+                <option value="this-week">This Week</option>
+                <option value="this-month" selected>This Month</option>
+                <option value="all-time">All Time</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="status">Status</label>
+              <select id="status-filter">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div style="text-align: right; margin-top: 10px;">
+            <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+          </div>
+        </div>
+
+        <!-- Agent Sections Container -->
+        <div id="agent-sections-container">
+          <div class="loading">Loading estimates data...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../components/Navbar.js"></script>
+  <script>
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = '../login.html';
+    }
+
+    // Initialize variables
+    let allEstimates = [];
+    let filteredEstimates = [];
+    let allAgents = [];
+    let allCustomers = [];
+    let agentEstimatesMap = {};
+    let systemAgents = []; // Add this variable to store system agents
+
+    // Helper function to safely get nested object values
+    function getNestedValue(obj, path) {
+      return path.split('.').reduce((current, key) => current && current[key], obj);
+    }
+
+    // Helper function to get agent name from estimate
+    function getAgentNameFromEstimate(estimate) {
+      // Check all possible agent fields
+      const agentFields = [
+        'assigned_agent', // <-- Prioritize this field
+        'agentName', 'agent', 'assignedAgent', 'createdBy', 'salesAgent',
+        'userId', 'userName', 'employeeName', 'salesperson', 'representative',
+        'createdByName', 'assignedTo', 'handledBy', 'agentId', 'user.name',
+        'createdByUser', 'assignedUser', 'salesPerson'
+      ];
+      
+      for (const field of agentFields) {
+        let value;
+        if (field.includes('.')) {
+          value = getNestedValue(estimate, field);
+        } else {
+          value = estimate[field];
+        }
+        
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          return value.trim();
+        }
+      }
+      
+      return 'Unassigned'; // Return 'Unassigned' instead of null for better display and filtering
+    }
+
+    // Helper function to get customer name from estimate
+    function getCustomerNameFromEstimate(estimate) {
+      const customerFields = [
+        'customerName', 'customer', 'clientName', 'client', 'customerDetails',
+        'customer.name', 'clientDetails.name', 'buyerName'
+      ];
+      
+      for (const field of customerFields) {
+        let value;
+        if (field.includes('.')) {
+          value = getNestedValue(estimate, field);
+        } else {
+          value = estimate[field];
+        }
+        
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          return value.trim();
+        }
+      }
+      
+      return null;
+    }
+
+    // Helper function to get estimate status
+    function getEstimateStatus(estimate) {
+      return estimate.status || 'pending';
+    }
+
+    // Helper function to get estimate date
+    function getEstimateDate(estimate) {
+      const dateFields = ['date', 'createdAt', 'estimateDate', 'created_at'];
+      
+      for (const field of dateFields) {
+        if (estimate[field]) {
+          const date = new Date(estimate[field]);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+      }
+      
+      return new Date(); // Default to today if no valid date found
+    }
+
+    // Function to load estimates from localStorage
+    async function loadEstimates() {
+      try {
+        console.log('Loading estimates...');
+        const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+        allEstimates = estimates;
+        
+        console.log('Total estimates loaded:', estimates.length);
+        
+        if (estimates.length > 0) {
+          console.log('Sample estimate:', estimates[0]);
+          // Diagnostic log: print all agent-related fields for the first estimate
+          Object.keys(estimates[0]).forEach(key => {
+            if (key.toLowerCase().includes('agent')) {
+              console.log('Agent-related field:', key, estimates[0][key]);
+            }
+          });
+          // Debug the agent information to help troubleshoot
+          debugAgentInformation(estimates);
+        }
+        
+        // Load system agents
+        await loadAgentsFromSystem();
+        
+        // Extract unique agents and customers
+        const agentsSet = new Set();
+        const customersSet = new Set();
+        
+        allEstimates.forEach((estimate, index) => {
+          const agentName = getAgentNameFromEstimate(estimate);
+          const customerName = getCustomerNameFromEstimate(estimate);
+          
+          if (agentName) {
+            agentsSet.add(agentName);
+          }
+          
+          if (customerName) {
+            customersSet.add(customerName);
+          }
+          
+          // Debug first few estimates
+          if (index < 3) {
+            console.log(`Estimate ${index + 1}:`, {
+              agent: agentName,
+              customer: customerName,
+              status: getEstimateStatus(estimate),
+              date: getEstimateDate(estimate)
+            });
+          }
+        });
+        
+        allAgents = Array.from(agentsSet).sort();
+        allCustomers = Array.from(customersSet).sort();
+        
+        console.log('Agents found in estimates:', allAgents);
+        console.log('Customers found:', allCustomers);
+        
+        // Populate filter dropdowns
+        populateFilters();
+        
+        // Apply initial filters
+        applyFilters();
+        
+        return true;
+      } catch (error) {
+        console.error('Error loading estimates:', error);
+        document.getElementById('agent-sections-container').innerHTML = `
+          <div class="no-data">Error loading data. Please try again.</div>
+        `;
+        return false;
+      }
+    }
+
+    // Function to populate filter dropdowns
+    function populateFilters() {
+      console.log('Populating filters...');
+      const agentSelect = document.getElementById('agent-filter');
+      const currentAgentValue = agentSelect.value;
+      agentSelect.innerHTML = '<option value="">All Agents</option>';
+      // Only include unique agent names from the current estimates
+      const agentsSet = new Set();
+      allEstimates.forEach(estimate => {
+        const agentName = getAgentNameFromEstimate(estimate);
+        if (agentName && agentName !== 'Unassigned') {
+          agentsSet.add(agentName.trim());
+        }
+      });
+      const agentsList = Array.from(agentsSet).sort((a, b) => a.localeCompare(b));
+      console.log('Agents for dropdown (from current estimates):', agentsList);
+      if (agentsList.length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "No agents found";
+        agentSelect.appendChild(option);
+      } else {
+        agentsList.forEach(agentName => {
+          const normalizedValue = agentName.trim().toLowerCase();
+          const option = document.createElement('option');
+          option.value = normalizedValue;
+          option.textContent = agentName;
+          if (normalizedValue === currentAgentValue.trim().toLowerCase()) {
+            option.selected = true;
+          }
+          agentSelect.appendChild(option);
+        });
+      }
+      // Add "Unassigned" option if not already present
+      if (!document.querySelector('#agent-filter option[value="unassigned"]')) {
+        const unassignedOption = document.createElement('option');
+        unassignedOption.value = "unassigned";
+        unassignedOption.textContent = "Unassigned";
+        agentSelect.appendChild(unassignedOption);
+      }
+      console.log('Agent dropdown HTML:', agentSelect.outerHTML);
+    }
+
+    // Function to check if date matches filter
+    function dateMatchesFilter(estimateDate, filterValue) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const estDate = new Date(estimateDate);
+      estDate.setHours(0, 0, 0, 0);
+      
+      switch (filterValue) {
+        case 'today':
+          return estDate.getTime() === today.getTime();
+          
+        case 'this-week':
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay());
+          return estDate >= startOfWeek && estDate <= today;
+          
+        case 'this-month':
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          return estDate >= startOfMonth && estDate <= today;
+          
+        case 'all-time':
+        default:
+          return true;
+      }
+    }
+
+    // Function to apply filters
+    function applyFilters() {
+      console.log('Applying filters...');
+      const agentFilter = document.getElementById('agent-filter').value.trim().toLowerCase();
+      const dateRangeFilter = document.getElementById('date-range').value;
+      const statusFilter = document.getElementById('status-filter').value;
+      console.log('Filter values:', {
+        agent: agentFilter,
+        dateRange: dateRangeFilter,
+        status: statusFilter
+      });
+      let filtered = [...allEstimates];
+      console.log('Starting with', filtered.length, 'estimates');
+      // Apply agent filter
+      if (agentFilter && agentFilter !== '') {
+        filtered = filtered.filter(estimate => {
+          const agentName = (getAgentNameFromEstimate(estimate) || '').trim().toLowerCase();
+          console.log('Comparing agent:', agentName, 'with filter:', agentFilter);
+          return agentName === agentFilter;
+        });
+        console.log('After agent filter:', filtered.length, 'estimates');
+      }
+      // Apply status filter
+      if (statusFilter && statusFilter !== 'all') {
+        filtered = filtered.filter(estimate => {
+          const status = getEstimateStatus(estimate);
+          
+          if (statusFilter === 'completed') {
+            return status === 'completed' || status === 'packed';
+          } else if (statusFilter === 'pending') {
+            return status === 'pending' || !status;
+          } else {
+            return status === statusFilter;
+          }
+        });
+        console.log('After status filter:', filtered.length, 'estimates');
+      }
+      
+      // Apply date filter
+      if (dateRangeFilter && dateRangeFilter !== 'all-time') {
+        filtered = filtered.filter(estimate => {
+          const estimateDate = getEstimateDate(estimate);
+          return dateMatchesFilter(estimateDate, dateRangeFilter);
+        });
+        console.log('After date filter:', filtered.length, 'estimates');
+      }
+      
+      // Group by agent
+      agentEstimatesMap = {};
+      
+      filtered.forEach(estimate => {
+        const agentName = getAgentNameFromEstimate(estimate);
+        
+        if (!agentEstimatesMap[agentName]) {
+          agentEstimatesMap[agentName] = {
+            agent: agentName,
+            estimates: [],
+            totalAmount: 0,
+            totalEstimates: 0,
+            pendingCount: 0,
+            completedCount: 0
+          };
+        }
+        
+        agentEstimatesMap[agentName].estimates.push(estimate);
+        agentEstimatesMap[agentName].totalAmount += parseFloat(estimate.totalAmount) || 0;
+        agentEstimatesMap[agentName].totalEstimates++;
+        
+        const status = getEstimateStatus(estimate);
+        if (status === 'completed' || status === 'packed') {
+          agentEstimatesMap[agentName].completedCount++;
+        } else {
+          agentEstimatesMap[agentName].pendingCount++;
+        }
+      });
+      
+      // Update filtered estimates
+      filteredEstimates = filtered;
+      
+      console.log('Final filtered estimates:', filteredEstimates.length);
+      console.log('Agent groups:', Object.keys(agentEstimatesMap));
+      
+      // Render the agent sections
+      renderAgentSections();
+      
+      // Update summary cards
+      updateSummaryCards();
+    }
+
+    // Function to update summary cards
+    function updateSummaryCards() {
+      document.getElementById('total-estimates').textContent = filteredEstimates.length;
+      
+      const totalValue = filteredEstimates.reduce((sum, estimate) => {
+        return sum + (parseFloat(estimate.totalAmount) || 0);
+      }, 0);
+      document.getElementById('total-value').textContent = '₹' + totalValue.toLocaleString('en-IN');
+      
+      document.getElementById('total-agents').textContent = Object.keys(agentEstimatesMap).length;
+    }
+
+    // Function to render agent sections
+    function renderAgentSections() {
+      const container = document.getElementById('agent-sections-container');
+      container.innerHTML = '';
+      
+      if (Object.keys(agentEstimatesMap).length === 0) {
+        container.innerHTML = `<div class="no-data">No estimates found matching the selected criteria</div>`;
+        return;
+      }
+      
+      // Sort agents by total amount (descending)
+      const sortedAgents = Object.values(agentEstimatesMap).sort((a, b) => b.totalAmount - a.totalAmount);
+      
+      sortedAgents.forEach(agentData => {
+        const agentSection = document.createElement('div');
+        agentSection.className = 'agent-section';
+        
+        // Create agent header
+        const agentHeader = document.createElement('div');
+        agentHeader.className = 'agent-header';
+        agentHeader.innerHTML = `
+          <h2>${agentData.agent}</h2>
+          <div class="agent-stats">
+            <div class="agent-stat">
+              <span class="agent-stat-label">Total Estimates</span>
+              <span class="agent-stat-value">${agentData.totalEstimates}</span>
+            </div>
+            <div class="agent-stat">
+              <span class="agent-stat-label">Total Amount</span>
+              <span class="agent-stat-value">₹${agentData.totalAmount.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="agent-stat">
+              <span class="agent-stat-label">Pending</span>
+              <span class="agent-stat-value">${agentData.pendingCount}</span>
+            </div>
+            <div class="agent-stat">
+              <span class="agent-stat-label">Completed</span>
+              <span class="agent-stat-value">${agentData.completedCount}</span>
+            </div>
+          </div>
+        `;
+        
+        // Create agent estimates table
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'report-table-container';
+        tableContainer.style.boxShadow = 'none';
+        tableContainer.style.padding = '0';
+        
+        const table = document.createElement('table');
+        table.className = 'report-table';
+        
+        // Create table header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Estimate ID</th>
+            <th>Date</th>
+            <th>Customer Name</th>
+            <th>Total Items</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        `;
+        
+        // Create table body
+        const tbody = document.createElement('tbody');
+        
+        // Sort estimates by date (newest first)
+        const sortedEstimates = [...agentData.estimates].sort((a, b) => 
+          getEstimateDate(b) - getEstimateDate(a)
+        );
+        
+        sortedEstimates.forEach(estimate => {
+          const row = document.createElement('tr');
+          
+          // Format date
+          const estimateDate = getEstimateDate(estimate).toLocaleDateString('en-IN');
+          
+          // Format status
+          const status = getEstimateStatus(estimate);
+          const statusClass = (status === 'completed' || status === 'packed') ? 
+            'status-badge-completed' : 'status-badge-pending';
+          const statusText = (status === 'completed' || status === 'packed') ? 
+            'Completed' : 'Pending';
+          
+          const customerName = getCustomerNameFromEstimate(estimate) || 'N/A';
+          
+          row.innerHTML = `
+            <td>${estimate.id || 'N/A'}</td>
+            <td>${estimateDate}</td>
+            <td>${customerName}</td>
+            <td>${estimate.totalItems || 0}</td>
+            <td>₹${(parseFloat(estimate.totalAmount) || 0).toLocaleString('en-IN')}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>
+              <button class="btn btn-outline" onclick="viewEstimate('${estimate.id}')">View</button>
+            </td>
+          `;
+          
+          tbody.appendChild(row);
+        });
+        
+        // Assemble the table
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+        
+        // Assemble the agent section
+        agentSection.appendChild(agentHeader);
+        agentSection.appendChild(tableContainer);
+        
+        // Add to container
+        container.appendChild(agentSection);
+      });
+    }
+
+    // Function to view estimate details
+    function viewEstimate(estimateId) {
+      // Store the ID in sessionStorage to be used by the sales page
+      sessionStorage.setItem('view-estimate-id', estimateId);
+      
+      // Navigate to sales page which will show the estimate
+      window.location.href = '../sales.html?view=estimate&id=' + estimateId;
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load estimates data
+      loadEstimates().catch(err => {
+        console.error('Error initializing page:', err);
+        document.getElementById('agent-sections-container').innerHTML = `
+          <div class="no-data">Error loading data. Please try again.</div>
+        `;
+      });
+      
+      // Set up event listeners
+      document.getElementById('apply-filters').addEventListener('click', applyFilters);
+      
+      document.getElementById('refresh-btn').addEventListener('click', () => {
+        document.getElementById('agent-sections-container').innerHTML = `
+          <div class="loading">Refreshing data...</div>
+        `;
+        setTimeout(() => {
+          loadEstimates().catch(err => {
+            console.error('Error refreshing data:', err);
+            document.getElementById('agent-sections-container').innerHTML = `
+              <div class="no-data">Error refreshing data. Please try again.</div>
+            `;
+          });
+        }, 500);
+      });
+      
+      // Debug button event listener
+      document.getElementById('debug-btn').addEventListener('click', () => {
+        const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+        debugAgentInformation(estimates);
+        debugEstimatesStructure();
+        console.log('System Agents:', systemAgents);
+        alert('Check the console for agent information debug data');
+      });
+    });
+
+    // Listen for storage events to refresh data when estimates are updated
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'estimates' || event.key === 'estimate-update-timestamp' || event.key === 'agents') {
+        console.log('Detected changes in storage, refreshing data');
+        loadEstimates().catch(err => {
+          console.error('Error refreshing data after storage event:', err);
+        });
+      }
+    });
+
+    // Export handlers
+    document.getElementById('export-pdf-btn').addEventListener('click', () => {
+      alert('PDF export functionality would be implemented here');
+    });
+
+    document.getElementById('export-excel-btn').addEventListener('click', () => {
+      alert('Excel export functionality would be implemented here');
+    });
+
+    // Add this debug function to see your actual data structure
+    function debugEstimatesStructure() {
+      const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+      console.log('=== ESTIMATES DEBUG ===');
+      console.log('Total estimates:', estimates.length);
+      
+      if (estimates.length > 0) {
+        // Show first few estimates structure
+        console.log('First estimate structure:', estimates[0]);
+        if (estimates.length > 1) {
+          console.log('Second estimate structure:', estimates[1]);
+        }
+        
+        // Find all unique field names across all estimates
+        const allFields = new Set();
+        estimates.forEach(estimate => {
+          Object.keys(estimate).forEach(key => allFields.add(key));
+        });
+        
+        console.log('All fields found in estimates:', Array.from(allFields).sort());
+        
+        // Specifically look for agent-related fields
+        const agentFields = Array.from(allFields).filter(field => 
+          field.toLowerCase().includes('agent') || 
+          field.toLowerCase().includes('sales') ||
+          field.toLowerCase().includes('user') ||
+          field.toLowerCase().includes('assign') ||
+          field.toLowerCase().includes('created') ||
+          field.toLowerCase().includes('employee')
+        );
+        
+        console.log('Potential agent fields:', agentFields);
+        
+        // Show actual values for potential agent fields
+        estimates.slice(0, 5).forEach((estimate, index) => {
+          console.log(`Estimate ${index + 1} agent-related values:`);
+          agentFields.forEach(field => {
+            if (estimate[field]) {
+              console.log(`  ${field}: "${estimate[field]}"`);
+            }
+          });
+        });
+      }
+    }
+
+    // Debug function to help troubleshoot agent information
+    function debugAgentInformation(estimates) {
+      console.log('=== AGENT INFORMATION DEBUG ===');
+      
+      // Log system agents first
+      console.log('System Agents:', systemAgents.length);
+      systemAgents.forEach((agent, index) => {
+        if (index < 5) { // Show first 5 agents only
+          console.log(`System Agent ${index + 1}:`, agent);
+        }
+      });
+      
+      // Then log agents from estimates
+      console.log('Agents in Estimates:');
+      estimates.forEach((estimate, index) => {
+        if (index < 5) { // Show first 5 estimates only
+          console.log(`Estimate ${index + 1} agent-related values:`);
+          const agentFields = ['agentName', 'agent', 'assignedAgent', 'createdBy', 'salesAgent',
+            'userId', 'userName', 'employeeName', 'salesperson', 'representative',
+            'createdByName', 'assignedTo', 'handledBy', 'agentId', 'user.name',
+            'createdByUser', 'assignedUser', 'salesPerson'];
+          agentFields.forEach(field => {
+            if (estimate[field]) {
+              console.log(`  ${field}: "${estimate[field]}"`);
+            }
+          });
+        }
+      });
+    }
+
+    // Function to load agents from localStorage or API
+    async function loadAgentsFromSystem() {
+      try {
+        console.log('Loading agents from system...');
+        
+        // Ensure agents are available in localStorage
+        const agents = await ensureAgentsInLocalStorage();
+        
+        if (agents.length > 0) {
+          systemAgents = agents;
+          console.log('Successfully loaded', agents.length, 'agents');
+        } else {
+          console.warn('No agents found in system');
+          systemAgents = [];
+        }
+        
+        // Log the first few agents for debugging
+        if (systemAgents.length > 0) {
+          console.log('Sample agents:', systemAgents.slice(0, 3));
+        }
+        
+        return systemAgents;
+      } catch (error) {
+        console.error('Error loading agents:', error);
+        return [];
+      }
+    }
+
+    // Function to ensure agents data is available in localStorage
+    async function ensureAgentsInLocalStorage() {
+      try {
+        // Check if agents already exist in localStorage
+        const storedAgents = JSON.parse(localStorage.getItem('agents') || '[]');
+        
+        if (storedAgents.length === 0) {
+          console.log('No agents found in localStorage, attempting to load from API...');
+          
+          try {
+            // Try to get agents from API
+            const apiAgents = await window.api.getAgents();
+            
+            if (apiAgents && apiAgents.length > 0) {
+              // Store agents in localStorage
+              localStorage.setItem('agents', JSON.stringify(apiAgents));
+              console.log(`Saved ${apiAgents.length} agents to localStorage`);
+              return apiAgents;
+            }
+          } catch (error) {
+            console.error('Error fetching agents from API:', error);
+          }
+        } else {
+          console.log(`Found ${storedAgents.length} agents in localStorage`);
+          return storedAgents;
+        }
+      } catch (error) {
+        console.error('Error in ensureAgentsInLocalStorage:', error);
+      }
+      
+      return [];
+    }
+  </script>
+</body>
+</html> 

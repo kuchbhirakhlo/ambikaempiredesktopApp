@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Management - Dashboard</title>
+  <link rel="stylesheet" href="../components/Navbar.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-name {
+      font-weight: 500;
+    }
+
+    .user-role {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .logout-btn {
+      background-color: transparent;
+      border: none;
+      color: #4a6cf7;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .tables-section {
+      margin-top: 40px;
+      border-top: 1px solid #eaeaea;
+      padding-top: 20px;
+      padding-bottom: 40px;
+      padding-left: 20px;
+      padding-right: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card.active {
+      border: 2px solid #4a6cf7;
+      box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .card-value {
+      font-size: 32px;
+      font-weight: 600;
+      color: #4a6cf7;
+      margin: 10px 0;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* Styles for buttons and modals */
+    .btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #4a6cf7;
+      color: #4a6cf7;
+    }
+
+    .btn-outline:hover {
+      background-color: #f0f4ff;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      width: 500px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .details-section {
+      margin-bottom: 25px;
+    }
+    
+    .details-section h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-size: 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    
+    .details-row {
+      display: flex;
+      margin-bottom: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .details-label {
+      width: 150px;
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .details-value {
+      flex: 1;
+      color: #333;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: none; /* Tables are hidden by default */
+      padding: 0 15px;
+    }
+
+    .data-table th {
+      background-color: #f9f9f9;
+      text-align: left;
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .data-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover {
+      background-color: #f5f9ff;
+    }
+
+    .table-container {
+      margin-top: 20px;
+      margin-bottom: 40px;
+      overflow-x: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    .table-title {
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      display: none;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-low {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+
+    .status-medium {
+      background-color: #fff8e1;
+      color: #ff8f00;
+    }
+
+    .status-good {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    /* Ensure tables are visible when they should be */
+    .table-visible {
+      display: table !important;
+      width: 100% !important;
+      margin-bottom: 30px !important;
+    }
+    
+    /* Show table titles when needed */
+    .title-visible {
+      display: block !important;
+      margin-top: 10px !important;
+      margin-bottom: 15px !important;
+    }
+    
+    /* Remove debug info class that's no longer needed */
+    .debug-info {
+      display: none;
+    }
+    
+    /* Override display for orders table */
+    #orders-table {
+      display: none;
+    }
+    
+    /* Override for table title */
+    #orders-table-title {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <header>
+          <h1>Dashboard</h1>
+          <div class="user-info">
+            <span id="user-name" class="user-name"></span>
+            <span id="user-role" class="user-role"></span>
+            <button id="logout-btn" class="logout-btn">Logout</button>
+          </div>
+        </header>
+
+        <div class="dashboard-actions" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+          <button id="download-dashboard-pdf" class="btn btn-primary">Download Dashboard PDF</button>
+        </div>
+
+        <div class="card-container">
+          <div id="orders-card" class="card">
+            <h2>Today's Orders</h2>
+            <div id="orders-count" class="card-value">0</div>
+            <div class="card-footer">
+              <span>Click to view details</span>
+              <span id="orders-value">₹0</span>
+            </div>
+          </div>
+
+          <div id="pending-orders-card" class="card">
+            <h2>Pending Estimates</h2>
+            <div id="pending-orders-count" class="card-value">0</div>
+            <div class="card-footer">
+              <span>Awaiting approval</span>
+              <span id="pending-orders-value">₹0</span>
+            </div>
+          </div>
+
+          <div id="inventory-card" class="card">
+            <h2>Inventory Status</h2>
+            <div id="low-stock-count" class="card-value">0</div>
+            <div class="card-footer">
+              <span>Items with low stock</span>
+              <span>Click to view details</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tables-section">
+        <h3 id="orders-table-title" class="table-title">Today's Orders</h3>
+        <div class="table-container">
+          <table id="orders-table" class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <!-- Orders will be populated here -->
+            </tbody>
+          </table>
+        </div>
+
+          <h3 id="pending-orders-table-title" class="table-title">Pending Estimates</h3>
+        <div class="table-container">
+          <table id="pending-orders-table" class="data-table">
+            <thead>
+              <tr>
+                  <th>Estimate ID</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pending-orders-table-body">
+                <!-- Pending estimates will be populated here -->
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="inventory-table-title" class="table-title">Inventory Status</h3>
+        <div class="table-container">
+          <table id="inventory-table" class="data-table">
+            <thead>
+              <tr>
+                  <th>Product Code</th>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-table-body">
+              <!-- Inventory will be populated here -->
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Item Details Modal -->
+  <div id="inventory-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Inventory Item Details</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="details-section">
+        <h3>Basic Information</h3>
+        <div class="details-row">
+          <div class="details-label">Product Code:</div>
+          <div class="details-value" id="view-item-id"></div>
+        </div>
+        <div class="details-row">
+          <div class="details-label">Product Name:</div>
+          <div class="details-value" id="view-item-name"></div>
+        </div>
+        <div class="details-row">
+          <div class="details-label">Current Quantity:</div>
+          <div class="details-value" id="view-item-quantity"></div>
+        </div>
+        <div class="details-row">
+          <div class="details-label">Price:</div>
+          <div class="details-value" id="view-item-price"></div>
+        </div>
+        <div class="details-row">
+          <div class="details-label">Status:</div>
+          <div class="details-value" id="view-item-status"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="printInventoryDetails()">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/Navbar.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    // Browser compatibility layer code - add this at the beginning
+    if (!window.api) {
+      console.log('Running in browser mode - using localStorage API fallback');
+      window.api = {
+        getProducts: async () => {
+          return JSON.parse(localStorage.getItem('products') || '[]');
+        },
+        getInventory: async () => {
+          return JSON.parse(localStorage.getItem('inventory') || '[]');
+        },
+        getSalesOrders: async () => {
+          return JSON.parse(localStorage.getItem('orders') || '[]');
+        },
+        getSalesEstimates: async () => {
+          return JSON.parse(localStorage.getItem('estimates') || '[]');
+        }
+      };
+      
+      // Initialize sample data if not present
+      if (!localStorage.getItem('orders')) {
+        const today = new Date().toISOString().split('T')[0];
+        const sampleOrders = [
+          {
+            id: 1,
+            order_number: 'ORD-001',
+            date: today,
+            customerName: 'Customer 1',
+            items: [{ product_name: 'Product 1', quantity: 2, price: 500 }, { product_name: 'Product 2', quantity: 1, price: 700 }],
+            total: 1500
+          },
+          {
+            id: 2,
+            order_number: 'ORD-002',
+            date: today,
+            customerName: 'Customer 2',
+            items: [{ product_name: 'Product 3', quantity: 3, price: 900 }],
+            total: 2200
+          }
+        ];
+        localStorage.setItem('orders', JSON.stringify(sampleOrders));
+      }
+      
+      if (!localStorage.getItem('estimates')) {
+        const sampleEstimates = [
+          {
+            id: 101,
+            estimate_number: 'EST-001',
+            date: new Date().toISOString(),
+            customerName: 'Customer 3',
+            status: 'pending',
+            items: [{ product_name: 'Product 1', quantity: 2, price: 500 }, { product_name: 'Product 2', quantity: 1, price: 700 }],
+            total: 1700
+          },
+          {
+            id: 102,
+            estimate_number: 'EST-002',
+            date: new Date().toISOString(),
+            customerName: 'Customer 4',
+            status: 'pending',
+            items: [{ product_name: 'Product 3', quantity: 3, price: 900 }],
+            total: 2700
+          }
+        ];
+        localStorage.setItem('estimates', JSON.stringify(sampleEstimates));
+      }
+      
+      if (!localStorage.getItem('inventory')) {
+        const sampleInventory = [
+          {
+            id: 201,
+            code: 'P001',
+            name: 'Product 1',
+            quantity: 15,
+            price: 500
+          },
+          {
+            id: 202,
+            code: 'P002',
+            name: 'Product 2',
+            quantity: 25,
+            price: 700
+          },
+          {
+            id: 203,
+            code: 'P003',
+            name: 'Product 3',
+            quantity: 50,
+            price: 900
+          }
+        ];
+        localStorage.setItem('inventory', JSON.stringify(sampleInventory));
+      }
+    }
+
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = 'login.html';
+    }
+
+    const user = JSON.parse(userString);
+
+    // Set user info in header
+    document.getElementById('user-name').textContent = user.username;
+    document.getElementById('user-role').textContent = `(${user.role})`;
+
+    // Logout functionality
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      sessionStorage.removeItem('user');
+      window.location.href = 'login.html';
+    });
+
+    // Function to set up update listeners
+    function setupUpdateListeners() {
+      console.log('Setting up real-time update listeners for dashboard');
+      
+      // Listen for order updates from sales.html and create-order.html
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'order-update-timestamp') {
+          console.log('Detected order changes, refreshing dashboard data');
+          loadDashboardData();
+          
+          // If the orders table is visible, refresh it too
+          if (!document.getElementById('orders-table').classList.contains('hidden')) {
+            showOrdersTable();
+          }
+        }
+        
+        if (event.key === 'estimate-update-timestamp') {
+          console.log('Detected estimate changes, refreshing dashboard data');
+          loadDashboardData();
+          
+          // If the pending orders table is visible, refresh it too
+          if (!document.getElementById('pending-orders-table').classList.contains('hidden')) {
+            showPendingOrdersTable();
+          }
+        }
+        
+        if (event.key === 'product-update-timestamp') {
+          console.log('Detected product changes, refreshing dashboard inventory data');
+          loadDashboardData();
+          
+          // If the inventory table is visible, refresh it too
+          if (!document.getElementById('inventory-table').classList.contains('hidden')) {
+            showInventoryTable();
+          }
+        }
+      });
+      
+      // Also listen for custom events that might be dispatched in the same window
+      window.addEventListener('order-update', () => {
+        console.log('Detected order update event, refreshing dashboard data');
+        loadDashboardData();
+        
+        // If the orders table is visible, refresh it too
+        if (!document.getElementById('orders-table').classList.contains('hidden')) {
+          showOrdersTable();
+        }
+      });
+      
+      window.addEventListener('estimate-update', () => {
+        console.log('Detected estimate update event, refreshing dashboard data');
+        loadDashboardData();
+        
+        // If the pending orders table is visible, refresh it too
+        if (!document.getElementById('pending-orders-table').classList.contains('hidden')) {
+          showPendingOrdersTable();
+        }
+      });
+      
+      // Set up periodic polling to check for updates
+      setInterval(() => {
+        const lastOrderCheck = sessionStorage.getItem('last-dashboard-order-check');
+        const currentOrderTime = sessionStorage.getItem('order-update-timestamp');
+        
+        // Check for order updates
+        if (lastOrderCheck !== currentOrderTime && currentOrderTime) {
+          console.log('Detected order changes from polling, refreshing data');
+          sessionStorage.setItem('last-dashboard-order-check', currentOrderTime);
+          loadDashboardData();
+          
+          // If the orders table is visible, refresh it too
+          if (!document.getElementById('orders-table').classList.contains('hidden')) {
+            showOrdersTable();
+          }
+        }
+        
+        // Check for estimate updates
+        const lastEstimateCheck = sessionStorage.getItem('last-dashboard-estimate-check');
+        const currentEstimateTime = sessionStorage.getItem('estimate-update-timestamp');
+        
+        if (lastEstimateCheck !== currentEstimateTime && currentEstimateTime) {
+          console.log('Detected estimate changes from polling, refreshing data');
+          sessionStorage.setItem('last-dashboard-estimate-check', currentEstimateTime);
+          loadDashboardData();
+          
+          // If the pending orders table is visible, refresh it too
+          if (!document.getElementById('pending-orders-table').classList.contains('hidden')) {
+            showPendingOrdersTable();
+          }
+        }
+        
+        // Check for product/inventory updates
+        const lastProductCheck = sessionStorage.getItem('last-dashboard-product-check');
+        const currentProductTime = sessionStorage.getItem('product-update-timestamp');
+        
+        if (lastProductCheck !== currentProductTime && currentProductTime) {
+          console.log('Detected product changes from polling, refreshing inventory data');
+          sessionStorage.setItem('last-dashboard-product-check', currentProductTime);
+          loadDashboardData();
+          
+          // If the inventory table is visible, refresh it too
+          if (!document.getElementById('inventory-table').classList.contains('hidden')) {
+            showInventoryTable();
+          }
+        }
+      }, 5000); // Check every 5 seconds
+    }
+
+    // Load dashboard data
+    async function loadDashboardData() {
+      try {
+        // Load today's orders from localStorage
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        let todayOrders = [];
+        
+        try {
+          // Get orders directly from localStorage to ensure we have the most recent data
+          const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          console.log('All orders loaded from localStorage:', allOrders);
+          
+          // Filter orders for today
+          todayOrders = allOrders.filter(order => {
+            // Ensure we handle different date formats
+            const orderDate = order.date ? 
+              (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
+              '';
+            return orderDate === today;
+          });
+          
+          console.log('Today\'s orders:', todayOrders);
+        } catch (apiError) {
+          console.error('Error loading sales orders:', apiError);
+          todayOrders = [];
+        }
+        
+        const ordersCount = todayOrders.length;
+        const ordersValue = todayOrders.reduce((sum, order) => sum + (parseFloat(order.totalAmount || order.total) || 0), 0);
+
+        document.getElementById('orders-count').textContent = ordersCount;
+        document.getElementById('orders-value').textContent = `₹${ordersValue.toFixed(2)}`;
+        console.log('Updated today\'s orders card:', { count: ordersCount, value: ordersValue });
+
+        // Load pending estimates from localStorage
+        let pendingEstimates = [];
+        
+        try {
+          // Get estimates directly from localStorage
+          const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          console.log('All estimates loaded from localStorage:', allEstimates);
+          
+          // Filter for pending estimates
+          pendingEstimates = allEstimates.filter(estimate => 
+            estimate.status && estimate.status.toLowerCase() === 'pending'
+          );
+          
+          console.log('Pending estimates:', pendingEstimates);
+        } catch (apiError) {
+          console.error('Error loading sales estimates:', apiError);
+          pendingEstimates = [];
+        }
+        
+        const pendingEstimatesCount = pendingEstimates.length;
+        const pendingEstimatesValue = pendingEstimates.reduce((sum, estimate) => sum + (parseFloat(estimate.totalAmount || estimate.total) || 0), 0);
+
+        document.getElementById('pending-orders-count').textContent = pendingEstimatesCount;
+        document.getElementById('pending-orders-value').textContent = `₹${pendingEstimatesValue.toFixed(2)}`;
+        console.log('Updated pending estimates card:', { count: pendingEstimatesCount, value: pendingEstimatesValue });
+
+        // Load inventory
+        let inventory = [];
+        
+        try {
+          // Try to get inventory from API first
+          if (window.api && window.api.getInventory) {
+            inventory = await window.api.getInventory();
+          } else {
+            // Fallback to localStorage if API not available
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          }
+          
+          console.log('Inventory loaded:', inventory);
+          
+          // Guard against null/undefined data
+          inventory = inventory && Array.isArray(inventory) ? inventory : [];
+        } catch (apiError) {
+          console.error('Error loading inventory:', apiError);
+          // Try localStorage as fallback if API fails
+          try {
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          } catch (e) {
+            inventory = [];
+          }
+        }
+        
+        const lowStockItems = inventory.filter(item => item.quantity < 30);
+        console.log('Low stock items:', lowStockItems);
+
+        document.getElementById('low-stock-count').textContent = lowStockItems.length;
+        console.log('Updated inventory card:', { lowStockCount: lowStockItems.length });
+      } catch (error) {
+        console.error('Error in loadDashboardData:', error);
+        
+        // Set all values to zero
+        document.getElementById('orders-count').textContent = '0';
+        document.getElementById('orders-value').textContent = '₹0.00';
+        
+        document.getElementById('pending-orders-count').textContent = '0';
+        document.getElementById('pending-orders-value').textContent = '₹0.00';
+        
+        document.getElementById('low-stock-count').textContent = '0';
+      }
+    }
+
+    // Function to populate tables when cards are clicked
+    async function showOrdersTable() {
+      try {
+        // Get today's orders from localStorage
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        let todayOrders = [];
+        
+        try {
+          // Get orders directly from localStorage to ensure we have the most recent data
+          const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          console.log('Loading orders table - All orders loaded:', allOrders);
+          
+          // Filter orders for today
+          todayOrders = allOrders.filter(order => {
+            // Ensure we handle different date formats
+            const orderDate = order.date ? 
+              (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
+              '';
+          return orderDate === today;
+        });
+            
+          console.log('Today\'s orders for table:', todayOrders);
+        } catch (error) {
+          console.log('Error loading orders from localStorage:', error);
+          todayOrders = [];
+        }
+
+        // Populate orders table
+        const ordersTable = document.getElementById('orders-table-body');
+        ordersTable.innerHTML = '';
+
+        if (!todayOrders || todayOrders.length === 0) {
+          // Show empty table with message
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td colspan="5" style="text-align: center; padding: 20px;">No orders found for today</td>
+          `;
+          ordersTable.appendChild(row);
+          
+          // Update card counts to show zero
+          document.getElementById('orders-count').textContent = '0';
+          document.getElementById('orders-value').textContent = '₹0.00';
+        } else {
+          todayOrders.forEach(order => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+              <td>${order.order_number || order.id || 'Unknown'}</td>
+              <td>${new Date(order.date).toLocaleDateString()}</td>
+              <td>${order.customerName || 'Unknown'}</td>
+              <td>₹${(parseFloat(order.totalAmount || order.total) || 0).toFixed(2)}</td>
+              <td>
+                <button class="btn btn-outline view-today-order-btn" data-order-id="${order.id}">View</button>
+              </td>
+            `;
+            ordersTable.appendChild(row);
+          });
+          
+          // Update card counts to match
+          document.getElementById('orders-count').textContent = todayOrders.length;
+          const totalValue = todayOrders.reduce((sum, order) => sum + (parseFloat(order.totalAmount || order.total) || 0), 0);
+          document.getElementById('orders-value').textContent = `₹${totalValue.toFixed(2)}`;
+        }
+        
+        // Add event listeners to view buttons to redirect to sales page
+        document.querySelectorAll('.view-today-order-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const orderId = e.target.getAttribute('data-order-id');
+            window.location.href = `sales.html?orderId=${orderId}`;
+          });
+        });
+
+        // Show the table
+        showTable('orders');
+      } catch (error) {
+        console.error('Error loading orders table:', error);
+        
+        // Show empty table with error message
+        const ordersTable = document.getElementById('orders-table-body');
+        ordersTable.innerHTML = '';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td colspan="5" style="text-align: center; padding: 20px;">Error loading orders data</td>
+        `;
+        ordersTable.appendChild(row);
+        
+        // Show the table
+        showTable('orders');
+        
+        // Update card counts to zero
+        document.getElementById('orders-count').textContent = '0';
+        document.getElementById('orders-value').textContent = '₹0.00';
+      }
+    }
+
+    async function showPendingOrdersTable() {
+      try {
+        // Get estimates from localStorage
+        let pendingEstimates = [];
+        
+        try {
+          // Get estimates directly from localStorage
+          const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          console.log('Loading estimates table - All estimates loaded:', allEstimates);
+          
+          // Filter for pending estimates
+          pendingEstimates = allEstimates.filter(estimate => 
+            estimate.status && estimate.status.toLowerCase() === 'pending'
+          );
+            
+          console.log('Pending estimates for table:', pendingEstimates);
+        } catch (error) {
+          console.log('Error loading estimates from localStorage:', error);
+          pendingEstimates = [];
+        }
+
+        // Populate pending orders table
+        const pendingOrdersTable = document.getElementById('pending-orders-table-body');
+        pendingOrdersTable.innerHTML = '';
+
+        if (!pendingEstimates || pendingEstimates.length === 0) {
+          // Show empty table with message
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td colspan="5" style="text-align: center; padding: 20px;">No pending estimates found</td>
+          `;
+          pendingOrdersTable.appendChild(row);
+          
+          // Update card counts to zero
+          document.getElementById('pending-orders-count').textContent = '0';
+          document.getElementById('pending-orders-value').textContent = '₹0.00';
+        } else {
+          pendingEstimates.forEach(estimate => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+              <td>${estimate.estimate_number || estimate.id || 'Unknown'}</td>
+              <td>${new Date(estimate.date).toLocaleDateString()}</td>
+              <td>${estimate.customerName || 'Unknown'}</td>
+              <td>₹${(parseFloat(estimate.totalAmount || estimate.total) || 0).toFixed(2)}</td>
+              <td>
+                <button class="btn btn-outline view-pending-estimate-btn" data-order-id="${estimate.id}">View</button>
+              </td>
+            `;
+            pendingOrdersTable.appendChild(row);
+          });
+          
+          // Update card counts to match
+          document.getElementById('pending-orders-count').textContent = pendingEstimates.length;
+          const totalValue = pendingEstimates.reduce((sum, estimate) => sum + (parseFloat(estimate.totalAmount || estimate.total) || 0), 0);
+          document.getElementById('pending-orders-value').textContent = `₹${totalValue.toFixed(2)}`;
+        }
+        
+        // Add event listeners to view buttons to redirect to sales page
+        document.querySelectorAll('.view-pending-estimate-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const estimateId = e.target.getAttribute('data-order-id');
+            window.location.href = `sales.html?estimateId=${estimateId}`;
+          });
+        });
+
+        // Show the table
+        showTable('pending-orders');
+      } catch (error) {
+        console.error('Error loading pending estimates table:', error);
+        
+        // Show empty table with error message
+        const pendingOrdersTable = document.getElementById('pending-orders-table-body');
+        pendingOrdersTable.innerHTML = '';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td colspan="5" style="text-align: center; padding: 20px;">Error loading estimates data</td>
+        `;
+        pendingOrdersTable.appendChild(row);
+        
+        // Show the table
+        showTable('pending-orders');
+        
+        // Update card counts to zero
+        document.getElementById('pending-orders-count').textContent = '0';
+        document.getElementById('pending-orders-value').textContent = '₹0.00';
+      }
+    }
+
+    async function showInventoryTable() {
+      try {
+        // Get inventory from localStorage
+        let inventory = [];
+        
+        try {
+          // Try to get inventory from API first
+          if (window.api && window.api.getInventory) {
+            inventory = await window.api.getInventory();
+          } else {
+            // Fallback to localStorage if API not available
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          }
+          
+          console.log('Loading inventory table - Inventory loaded:', inventory);
+          
+          // Guard against null/undefined data
+          inventory = inventory && Array.isArray(inventory) ? inventory : [];
+        } catch (error) {
+          console.log('Error loading inventory:', error);
+          // Try localStorage as fallback if API fails
+          try {
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          } catch (e) {
+            inventory = [];
+          }
+        }
+
+        // Populate inventory table
+        const inventoryTable = document.getElementById('inventory-table-body');
+        inventoryTable.innerHTML = '';
+
+        if (!inventory || inventory.length === 0) {
+          // Show empty table with message
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td colspan="6" style="text-align: center; padding: 20px;">No inventory data found</td>
+          `;
+          inventoryTable.appendChild(row);
+          
+          // Update card count to zero
+          document.getElementById('low-stock-count').textContent = '0';
+        } else {
+          // Only show low and medium stock items in the table
+          const lowStockItems = inventory.filter(item => item.quantity < 30);
+          
+          if (lowStockItems.length === 0) {
+            // Show message if no low stock items
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td colspan="6" style="text-align: center; padding: 20px;">No low stock items found</td>
+            `;
+            inventoryTable.appendChild(row);
+          } else {
+            // Show low stock items
+            lowStockItems.forEach(item => {
+            let statusClass = 'status-good';
+            let status = 'Good';
+
+            if (item.quantity < 20) {
+              statusClass = 'status-low';
+              status = 'Low';
+            } else if (item.quantity < 30) {
+              statusClass = 'status-medium';
+              status = 'Medium';
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.code || item.product_code || item.id || 'Unknown'}</td>
+                <td>${item.name || 'Unknown Product'}</td>
+              <td>${item.quantity || 0}</td>
+              <td>₹${item.price ? item.price.toFixed(2) : '0.00'}</td>
+              <td><span class="status-badge ${statusClass}">${status}</span></td>
+              <td>
+                  <button class="btn btn-outline view-inventory-btn" data-order-id="${item.id}">View</button>
+              </td>
+            `;
+            inventoryTable.appendChild(row);
+          });
+        }
+          
+          // Update low stock count on card
+          document.getElementById('low-stock-count').textContent = lowStockItems.length;
+        }
+        
+        // Add event listeners to view buttons
+        document.querySelectorAll('.view-inventory-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => handleViewInventory(e, inventory));
+        });
+
+        // Show the table
+        showTable('inventory');
+      } catch (error) {
+        console.error('Error loading inventory table:', error);
+        
+        // Show empty table with error message
+        const inventoryTable = document.getElementById('inventory-table-body');
+        inventoryTable.innerHTML = '';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td colspan="6" style="text-align: center; padding: 20px;">Error loading inventory data</td>
+        `;
+        inventoryTable.appendChild(row);
+        
+        // Show the table
+        showTable('inventory');
+        
+        // Update card count to zero
+        document.getElementById('low-stock-count').textContent = '0';
+      }
+    }
+
+    // Card click handlers
+    document.getElementById('orders-card').addEventListener('click', function () {
+      showOrdersTable();
+    });
+
+    document.getElementById('pending-orders-card').addEventListener('click', function () {
+      showPendingOrdersTable();
+    });
+
+    document.getElementById('inventory-card').addEventListener('click', function () {
+      showInventoryTable();
+    });
+
+    // Function to show the selected table and hide others
+    function showTable(tableType) {
+      const tables = ['orders', 'stock-updates', 'pending-orders', 'inventory'];
+
+      // Reset all cards
+      document.getElementById('orders-card').classList.remove('active');
+      document.getElementById('pending-orders-card').classList.remove('active');
+      document.getElementById('inventory-card').classList.remove('active');
+      
+      // Highlight active card
+      if (tableType === 'orders') {
+        document.getElementById('orders-card').classList.add('active');
+      } else if (tableType === 'pending-orders') {
+        document.getElementById('pending-orders-card').classList.add('active');
+      } else if (tableType === 'inventory') {
+        document.getElementById('inventory-card').classList.add('active');
+      }
+
+      // Hide all tables first
+      tables.forEach(type => {
+        const table = document.getElementById(`${type}-table`);
+        const title = document.getElementById(`${type}-table-title`);
+
+        if (table) {
+          table.style.display = 'none';
+        }
+        if (title) {
+          title.style.display = 'none';
+        }
+      });
+      
+      // Then show the selected table
+      const selectedTable = document.getElementById(`${tableType}-table`);
+      const selectedTitle = document.getElementById(`${tableType}-table-title`);
+      
+      if (selectedTable) {
+        selectedTable.style.display = 'table';
+      }
+      if (selectedTitle) {
+        selectedTitle.style.display = 'block';
+      }
+      
+      // Scroll to the table title for better visibility
+      if (selectedTitle) {
+        setTimeout(() => {
+          selectedTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+
+    // Load data when page is ready
+    async function initializeDashboard() {
+      await loadDashboardData();
+      
+      // Show Today's Orders table by default and highlight its card
+      document.getElementById('orders-card').classList.add('active');
+      
+      // Show orders table
+      showOrdersTable();
+      
+      // Setup real-time update listeners
+      setupUpdateListeners();
+    }
+    
+    // Initialize the dashboard when page loads
+    initializeDashboard();
+    
+    // Modal handlers
+    function handleViewInventory(e, inventoryList) {
+      if (!inventoryList || inventoryList.length === 0) {
+        alert('No inventory data available');
+        return;
+      }
+      
+      const itemId = e.target.getAttribute('data-order-id');
+      console.log('Looking for inventory item with ID:', itemId);
+      
+      // Try to find the item by both string and number comparison
+      const item = inventoryList.find(i => 
+        String(i.id) === String(itemId) ||
+        (typeof i.id === 'number' && i.id === parseInt(itemId))
+      );
+      
+      if (!item) {
+        console.error('Inventory item not found with ID:', itemId);
+        alert('Inventory item details not found');
+        return;
+      }
+      
+      // Populate the modal with inventory item details
+      document.getElementById('view-item-id').textContent = item.code || item.product_code || item.id || '-';
+      document.getElementById('view-item-name').textContent = item.name || '-';
+      document.getElementById('view-item-quantity').textContent = item.quantity || '0';
+      document.getElementById('view-item-price').textContent = `₹${item.price ? item.price.toFixed(2) : '0.00'}`;
+      
+      let status = 'Good';
+      if (item.quantity < 20) {
+        status = 'Low Stock';
+      } else if (item.quantity < 30) {
+        status = 'Medium Stock';
+      }
+      document.getElementById('view-item-status').textContent = status;
+      
+      // Show modal
+      const modal = document.getElementById('inventory-modal');
+      modal.style.display = 'flex';
+    }
+    
+    // Close modal buttons
+    document.querySelectorAll('.close-btn, .close-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('inventory-modal').style.display = 'none';
+      });
+    });
+
+    function printInventoryDetails() {
+      const itemId = document.getElementById('view-item-id').textContent;
+      const itemName = document.getElementById('view-item-name').textContent;
+      const itemQuantity = document.getElementById('view-item-quantity').textContent;
+      const itemPrice = document.getElementById('view-item-price').textContent;
+      const itemStatus = document.getElementById('view-item-status').textContent;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Inventory Item Details</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .details { margin: 20px; }
+              .row { margin-bottom: 10px; }
+              .label { font-weight: bold; display: inline-block; width: 150px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Inventory Item Details</h1>
+              <p>${new Date().toLocaleString()}</p>
+            </div>
+            <div class="details">
+              <div class="row">
+                <span class="label">Product Code:</span> ${itemId}
+              </div>
+              <div class="row">
+                <span class="label">Product Name:</span> ${itemName}
+              </div>
+              <div class="row">
+                <span class="label">Quantity:</span> ${itemQuantity}
+              </div>
+              <div class="row">
+                <span class="label">Price:</span> ${itemPrice}
+              </div>
+              <div class="row">
+                <span class="label">Stock Status:</span> ${itemStatus}
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    // PDF generation functions
+    function generateDashboardPDF() {
+      // Initialize jsPDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(18);
+      doc.text("Dashboard Report", 14, 22);
+      
+      // Add date and time
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+      
+      try {
+        // Summary section
+        doc.setFontSize(14);
+        doc.text("Summary", 14, 45);
+        
+        // Get dashboard data
+        const ordersCount = document.getElementById('orders-count').textContent;
+        const ordersValue = document.getElementById('orders-value').textContent;
+        const pendingCount = document.getElementById('pending-orders-count').textContent;
+        const pendingValue = document.getElementById('pending-orders-value').textContent;
+        const lowStockCount = document.getElementById('low-stock-count').textContent;
+        
+        // Add summary table
+        doc.autoTable({
+          startY: 50,
+          head: [['Metric', 'Value']],
+          body: [
+            ["Today's Orders Count", ordersCount],
+            ["Today's Orders Value", ordersValue],
+            ["Pending Estimates Count", pendingCount],
+            ["Pending Estimates Value", pendingValue],
+            ["Low Stock Items Count", lowStockCount]
+          ],
+          theme: 'grid',
+          headStyles: {
+            fillColor: [74, 108, 247],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold'
+          }
+        });
+        
+        // Today's orders section
+        let finalY = doc.lastAutoTable.finalY + 15;
+        doc.setFontSize(14);
+        doc.text("Today's Orders", 14, finalY);
+        
+        // Get today's orders
+        const today = new Date().toISOString().split('T')[0];
+        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const todayOrders = allOrders.filter(order => {
+          const orderDate = order.date ? 
+            (order.date.includes('T') ? order.date.split('T')[0] : order.date) : '';
+          return orderDate === today;
+        });
+        
+        // Add orders table
+        if (todayOrders.length > 0) {
+          const ordersData = todayOrders.map(order => [
+            order.order_number || order.id || 'Unknown',
+            new Date(order.date).toLocaleDateString(),
+            order.customerName || 'Unknown',
+            `₹${(parseFloat(order.totalAmount || order.total) || 0).toFixed(2)}`
+          ]);
+          
+          doc.autoTable({
+            startY: finalY + 5,
+            head: [['Order ID', 'Date', 'Customer', 'Total']],
+            body: ordersData,
+            theme: 'grid',
+            headStyles: {
+              fillColor: [74, 108, 247],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+              fillColor: [240, 244, 255]
+            }
+          });
+        } else {
+          doc.text("No orders found for today", 14, finalY + 10);
+          finalY += 15;
+        }
+        
+        // Pending estimates section
+        finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : finalY + 20;
+        doc.setFontSize(14);
+        doc.text("Pending Estimates", 14, finalY);
+        
+        // Get pending estimates
+        const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+        const pendingEstimates = allEstimates.filter(estimate => 
+          estimate.status && estimate.status.toLowerCase() === 'pending'
+        );
+        
+        // Add estimates table
+        if (pendingEstimates.length > 0) {
+          const estimatesData = pendingEstimates.map(estimate => [
+            estimate.estimate_number || estimate.id || 'Unknown',
+            new Date(estimate.date).toLocaleDateString(),
+            estimate.customerName || 'Unknown',
+            `₹${(parseFloat(estimate.totalAmount || estimate.total) || 0).toFixed(2)}`
+          ]);
+          
+          doc.autoTable({
+            startY: finalY + 5,
+            head: [['Estimate ID', 'Date', 'Customer', 'Total']],
+            body: estimatesData,
+            theme: 'grid',
+            headStyles: {
+              fillColor: [74, 108, 247],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+              fillColor: [240, 244, 255]
+            }
+          });
+        } else {
+          doc.text("No pending estimates found", 14, finalY + 10);
+          finalY += 15;
+        }
+        
+        // Low stock inventory section
+        finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : finalY + 20;
+        
+        // Check if we need a new page
+        if (finalY > 250) {
+          doc.addPage();
+          finalY = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.text("Low Stock Inventory", 14, finalY);
+        
+        // Get inventory data
+        let inventory = [];
+        try {
+          if (window.api && window.api.getInventory) {
+            inventory = window.api.getInventory();
+          } else {
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          }
+        } catch (error) {
+          inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+        }
+        
+        // Filter for low stock items
+        const lowStockItems = inventory.filter(item => item.quantity < 30);
+        
+        // Add inventory table
+        if (lowStockItems.length > 0) {
+          const inventoryData = lowStockItems.map(item => {
+            let status = 'Good';
+            if (item.quantity < 20) {
+              status = 'Low';
+            } else if (item.quantity < 30) {
+              status = 'Medium';
+            }
+            
+            return [
+              item.code || item.product_code || item.id || 'Unknown',
+              item.name || 'Unknown Product',
+              item.quantity || 0,
+              `₹${item.price ? item.price.toFixed(2) : '0.00'}`,
+              status
+            ];
+          });
+          
+          doc.autoTable({
+            startY: finalY + 5,
+            head: [['Product Code', 'Product Name', 'Quantity', 'Price', 'Status']],
+            body: inventoryData,
+            theme: 'grid',
+            headStyles: {
+              fillColor: [74, 108, 247],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+              fillColor: [240, 244, 255]
+            }
+          });
+        } else {
+          doc.text("No low stock items found", 14, finalY + 10);
+        }
+        
+        // Save the PDF
+        doc.save('dashboard_report.pdf');
+      } catch (error) {
+        console.error('Error generating dashboard PDF:', error);
+        alert('Error generating PDF. Please try again.');
+      }
+    }
+    
+    // Add event listener for PDF download button
+    document.getElementById('download-dashboard-pdf').addEventListener('click', generateDashboardPDF);
+  </script>
+</body>
+
+</html>

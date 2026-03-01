@@ -1,0 +1,3365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Management - Sales</title>
+  <link rel="stylesheet" href="../components/Navbar.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .page-content {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .btn-success {
+      background-color: #28a745;
+      color: white;
+    }
+    .btn-info {
+      background-color: #17a2b8;
+      color: white;
+    }
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .table-container {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .editable {
+      border: 1px solid #ddd;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .editable:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    .generate-estimate {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .estimate-counter {
+      background-color: #28a745;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    } 
+    .order-details {
+      display: flex;  
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .order-details .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .order-details label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #495057;
+      font-size: 14px;
+    }
+    .order-details input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+    .order-details input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+    }
+    .hidden {
+      display: none;
+    }
+    .flex-container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .order-edit-section {
+      flex: 3;
+      max-height: 500px;
+      overflow-y: auto;
+      width: 100%;
+    }
+    .product-card {
+      flex: 1;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+      min-width: 250px;
+    }
+    .product-card h3 {
+      margin-top: 0;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+      color: #333;
+    }
+    .product-info {
+      margin-bottom: 15px;
+    }
+    .product-info p {
+      margin: 5px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .product-info p span:first-child {
+      font-weight: 500;
+      color: #666;
+    }
+    .availability {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .in-stock {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .low-stock {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .out-of-stock {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .form-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-title {
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .selected-row {
+      background-color: #e6f7ff !important;
+    }
+    .generate-btn-container {
+      margin: 15px 0;
+      text-align: right;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .badge-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .hidden.modal-overlay {
+      display: none;
+    }
+    .modal-content {
+      background-color: white;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+
+    }
+    .modal-header-with-status {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+
+    }
+    .modal-header-with-status .title-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .modal-header h3 {
+      margin: 0;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: #666;
+    }
+    .text-success {
+      color: #28a745;
+      font-weight: 500;
+    }
+    .text-danger {
+      color: #dc3545;
+      font-weight: 500;
+    }
+    .status-edit-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    .status-edit-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 8px 12px;
+      border: 1px solid #eaeaea;
+      max-width: 350px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .status-edit-box select {
+      padding: 6px 10px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      min-width: 120px;
+      background-color: white;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.075);
+    }
+    .status-edit-box select:focus {
+      outline: none;
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 80px;
+    }
+    .status-badge-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status-badge-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    /* Print styles */
+    @media print {
+      /* Hide the main page when printing */
+      body > * {
+        display: none;
+      }
+      
+      /* Only print content from popup window */
+    }
+    /* Responsive styles */
+    .label-grid {
+      display: grid;
+      width: 100%;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      gap: 0;
+      height: 100%;
+      box-sizing: border-box;
+      border-collapse: collapse;
+      margin: 0;
+      margin-left: 0.5cm;
+      margin-right: 0.5cm;
+      margin-bottom: 0.5cm;
+      width: calc(100% - 1cm);
+      height: calc(100% - 0.5cm);
+    }
+    @page {
+      size: A4;
+      margin: 0.5cm;
+      width: 21cm;
+      height: 29.7cm;
+    }
+    
+    html, body {
+        width: 100%;
+        height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 10px;
+        background-color: white;
+      }
+    
+    /* Scale content to fit page */
+    .content-wrapper {
+      width: 100%;
+      box-sizing: border-box;
+      overflow: visible;
+      position: relative;
+    }
+    
+    /* Estimate print styles */
+    .estimate-container {
+      width: 100%;
+      height: calc(100% - 2cm); /* Ensure container doesn't exceed page height */
+      padding: 1cm;
+      padding-bottom: 2cm;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      text-wrap: nowrap;
+    }
+    /* Add search box styles */
+    .search-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    .search-box {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .search-box:focus {
+      outline: none;
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <header>
+          <h1>Sales</h1>
+        </header>
+        
+        <div class="page-content">
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="showOrders()">Orders</button>
+            <button class="btn btn-secondary" onclick="showEstimates()">Estimates</button>
+          </div>
+
+          <div id="orders-section">
+            <div class="action-bar">
+              <h3>Order Management</h3>
+              <div>
+                <button class="btn btn-primary" onclick="window.location.href='create-order.html'">Add Order</button>
+              </div>
+            </div>
+
+            <!-- Add search box for orders -->
+            <div class="search-container">
+              <input type="text" id="order-search" class="search-box" placeholder="Search by order ID or customer name..." onkeyup="searchOrders()">
+              <button class="btn btn-secondary btn-sm" onclick="clearOrderSearch()">Clear</button>
+            </div>
+
+            <div id="order-form" class="form-container hidden">
+              <h3 class="form-title">Create New Order</h3>
+              <div class="order-details">
+                <div class="form-group">
+                  <label for="orderNumber">Order Number</label>
+                  <input type="text" id="orderNumber" placeholder="Enter order number">
+                </div>
+                <div class="form-group">
+                  <label for="orderDate">Date</label>
+                  <input type="date" id="orderDate" value="">
+                </div>
+                <div class="form-group">
+                  <label for="customerName">Customer Name</label>
+                  <input type="text" id="customerName" placeholder="Enter customer name">
+                </div>
+              </div>
+
+              <div class="table-container">
+                <table id="order-items-table">
+                  <thead>
+                    <tr>
+                      <th>Sr Number</th>
+                      <th>Product Code</th>
+                      <th>Name</th>
+                      <th>Category</th>
+                      <th>Size</th>
+                      <th>Quantity</th>
+                      <th>Rate</th>
+                      <th>Total</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="order-items-body">
+                    <tr>
+                      <td>1</td>
+                      <td><input type="text" class="editable" id="newProductCode" placeholder="Product code"></td>
+                      <td id="newProductName">-</td>
+                      <td id="newProductCategory">-</td>
+                      <td id="newProductSize">-</td>
+                      <td><input type="number" class="editable" id="newProductQuantity" value="0" min="0"></td>
+                      <td id="newProductRate">-</td>
+                      <td id="newProductTotal">₹0</td>
+                      <td>
+                        <button class="btn btn-success btn-sm" onclick="addItemToOrder()">Add</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-secondary" onclick="cancelOrder()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveOrder()">Save Order</button>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table id="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Table rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="order-detail-section" class="hidden modal-overlay">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3>Order Details</h3>
+                  <button class="modal-close" onclick="closeOrderDetail()">&times;</button>
+                </div>
+                <div class="flex-container">
+                  <div class="order-edit-section">
+                    <table id="order-details-table">
+                      <thead>
+                        <tr>
+                          <th>Sr Number</th>
+                          <th>Product Code</th>
+                          <th>Name</th>
+                          <th>Category</th>
+                          <th>Size</th>
+                          <th>Quantity</th>
+                          <th>Rate</th>
+                          <th>Total</th>
+                          <th>Product Availability</th>
+                        </tr>
+                      </thead>
+                      <tbody id="order-details-body">
+                        <!-- Order details will be populated here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="estimates-section" class="hidden">
+            <div class="action-bar">
+              <h3>Estimates Management</h3>
+              <div>
+                <button class="btn btn-secondary" onclick="window.useDummyDataForPrint = true; printEstimate();">Test Estimate Print</button>
+                <button class="btn btn-info" onclick="window.useDummyDataForPrint = true; printLabel();">Test Label Print</button>
+              </div>
+            </div>
+            
+            <!-- Add search box for estimates -->
+            <div class="search-container">
+              <input type="text" id="estimate-search" class="search-box" placeholder="Search by estimate ID or customer name..." onkeyup="searchEstimates()">
+              <button class="btn btn-secondary btn-sm" onclick="clearEstimateSearch()">Clear</button>
+            </div>
+            
+            <div class="table-container">
+              <table id="estimates-table">
+                <thead>
+                  <tr>
+                    <th>Estimate ID</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Agent Name</th>
+                    <th>Total Items</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="estimates-table-body">
+                  <!-- Estimates table rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            
+            <div id="estimate-detail-section" class="hidden modal-overlay">
+              <div class="modal-content">
+                <div class="modal-header-with-status">
+                  <div class="title-section">
+                    <h3>Estimate Details</h3>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                      <!-- Status edit section positioned on the right -->
+                      <div id="estimate-status-edit" class="status-edit-box hidden" style="padding: 6px 10px;">
+                        <label for="estimate-detail-status" style="font-weight: 500; margin: 0; font-size: 14px;">Status:</label>
+                        <select id="estimate-detail-status" style="font-size: 14px; padding: 4px 8px;">
+                          <option value="pending">Pending</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <button class="btn btn-success btn-sm" style="padding: 4px 10px; font-size: 14px;" onclick="updateEstimateStatusFromDetail()">Update</button>
+                      </div>
+                      <button class="modal-close" style="margin-left: 10px;" onclick="closeEstimateDetail()">&times;</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-container">
+                  <div class="order-edit-section">
+                    <table id="estimate-details-table">
+                      <thead>
+                        <tr>
+                          <th>Sr Number</th>
+                          <th>Product Code</th>
+                          <th>Name</th>
+                          <th>Category</th>
+                          <th>Size</th>
+                          <th>Quantity</th>
+                          <th>Rate</th>
+                          <th>Total</th>
+                          <th>Product Availability</th>
+                        </tr>
+                      </thead>
+                      <tbody id="estimate-details-body">
+                        <!-- Estimate details will be populated here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Edit Modal for Estimates -->
+  <div id="estimate-status-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 400px; padding: 25px;">
+      <div class="modal-header">
+        <h3>Edit Estimate Status</h3>
+        <button class="modal-close" onclick="closeEstimateStatusModal()">&times;</button>
+      </div>
+      <div style="margin: 20px 0;">
+        <label for="estimate-status-select" style="display: block; margin-bottom: 10px; font-weight: 500;">Status</label>
+        <select id="estimate-status-select" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-outline" onclick="closeEstimateStatusModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEstimateStatus()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Options Modal -->
+  <div id="print-options-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 400px; padding: 25px;">
+      <div class="modal-header">
+        <h3>Print Options</h3>
+        <button class="modal-close" onclick="closePrintOptionsModal()">&times;</button>
+      </div>
+      <div style="margin: 30px 0; display: flex; flex-direction: column; gap: 15px;">
+        <button class="btn btn-primary" style="padding: 12px; font-size: 14px;" onclick="printEstimate()">
+          <i class="fas fa-file-invoice"></i> Estimate Print
+        </button>
+        <button class="btn btn-info" style="padding: 12px; font-size: 14px;" onclick="printLabel()">
+          <i class="fas fa-tag"></i> Label Print
+        </button>
+        <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 15px;">
+          <button class="btn btn-secondary" style="padding: 12px; font-size: 14px;" onclick="enableDummyDataForPrint()">
+            <i class="fas fa-vial"></i> Enable Test Data (40 items)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estimate Print Preview Modal -->
+  <div id="estimate-print-preview" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 850px; padding: 35px;">
+      <div class="modal-header">
+        <h3>Estimate Print Preview</h3>
+        <div>
+          <button class="btn btn-success btn-sm" style="margin-right: 10px;" onclick="doPrint()">Print</button>
+          <button class="modal-close" onclick="closeEstimatePrintPreview()">&times;</button>
+        </div>
+      </div>
+      <div id="estimate-print-content" style="margin-top: 20px; width: 100%;">
+        <!-- Estimate print content will be generated here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Label Print Preview Modal -->
+  <div id="label-print-preview" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 850px; padding: 30px;">
+      <div class="modal-header">
+        <h3>Label Print Preview</h3>
+        <div>
+          <button class="btn btn-success btn-sm" style="margin-right: 10px;" onclick="doPrint()">Print</button>
+          <button class="modal-close" onclick="closeLabelPrintPreview()">&times;</button>
+        </div>
+      </div>
+      <div id="label-print-content" style=" width: 100%;">
+        <!-- Label print content will be generated here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/Navbar.js"></script>
+  <script>
+    // Browser compatibility layer for window.api
+    if (!window.api) {
+      console.log('Running in browser mode - using localStorage API fallback');
+      window.api = {
+        getProducts: async () => {
+          return JSON.parse(localStorage.getItem('products') || '[]');
+        },
+        getInventory: async () => {
+          return JSON.parse(localStorage.getItem('inventory') || '[]');
+        },
+        updateInventory: async (data) => {
+          const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          const inventoryIndex = inventory.findIndex(item => item.productId === data.productId);
+          
+          if (inventoryIndex !== -1) {
+            inventory[inventoryIndex].quantity += data.quantity;
+          } else {
+            inventory.push({
+              productId: data.productId,
+              quantity: data.quantity,
+              location: data.location || 'Main Warehouse'
+            });
+          }
+          
+          // Also record a transaction for tracking
+          const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+          transactions.push({
+            id: transactions.length + 1,
+            type: 'inventory',
+            productId: data.productId,
+            quantity: data.quantity,
+            location: data.location || 'Main Warehouse',
+            createdBy: data.userId || 1,
+            timestamp: new Date().toISOString()
+          });
+          
+          localStorage.setItem('inventory', JSON.stringify(inventory));
+          localStorage.setItem('transactions', JSON.stringify(transactions));
+          return { success: true };
+        },
+        getAllOrders: async () => {
+          return JSON.parse(localStorage.getItem('orders') || '[]');
+        },
+        getEstimates: async () => {
+          return JSON.parse(localStorage.getItem('estimates') || '[]');
+        },
+        updateEstimateStatus: async (id, status) => {
+          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          const index = estimates.findIndex(est => est.id === id);
+          
+          if (index !== -1) {
+            estimates[index].status = status;
+            localStorage.setItem('estimates', JSON.stringify(estimates));
+          }
+          
+          return { success: true };
+        },
+        getCustomers: async () => {
+          return JSON.parse(localStorage.getItem('customers') || '[]');
+        }
+      };
+      
+      // Initialize sample data if not present
+      if (!localStorage.getItem('products')) {
+        const sampleProducts = [
+          { id: 1, code: 'P001', name: 'T-Shirt', category: 'Apparel', size: 'M', price: 25.99 },
+          { id: 2, code: 'P002', name: 'Jeans', category: 'Apparel', size: '32', price: 45.99 },
+          { id: 3, code: 'P003', name: 'Sneakers', category: 'Footwear', size: '9', price: 59.99 }
+        ];
+        localStorage.setItem('products', JSON.stringify(sampleProducts));
+        
+        const sampleInventory = [
+          { id: 1, productId: 1, code: 'P001', quantity: 50, location: 'Main Warehouse' },
+          { id: 2, productId: 2, code: 'P002', quantity: 30, location: 'Main Warehouse' },
+          { id: 3, productId: 3, code: 'P003', quantity: 20, location: 'Main Warehouse' }
+        ];
+        localStorage.setItem('inventory', JSON.stringify(sampleInventory));
+      }
+    }
+    
+    // Initialize the page when loaded
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Get current user
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (currentUser) {
+          user = currentUser;
+          document.getElementById('userName').textContent = user.name || 'Admin';
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
+      }
+      
+      // Load all necessary data
+      try {
+        await loadProductsAndInventory();
+        await loadOrders();
+        await loadEstimates();
+        
+        // Check for any pending estimate updates from other tabs
+        const lastEstimateUpdate = localStorage.getItem('estimate-update-timestamp');
+        if (lastEstimateUpdate) {
+          console.log('Found pending estimate updates, refreshing data');
+          const action = localStorage.getItem('estimate-update-action');
+          const updateData = JSON.parse(localStorage.getItem('estimate-update-data') || '{}');
+          console.log(`Pending update: ${action} for estimate ID: ${updateData.id}`);
+        }
+        
+        // Set up the click listeners for nav links
+        if (typeof setupNavListeners !== 'function') {
+          window.setupNavListeners = function() {
+            console.log('Nav listeners setup (stub implementation)');
+          }
+        }
+        setupNavListeners();
+        
+        // Generate a new order number
+        const newOrderNumberElem = document.getElementById('newOrderNumber');
+        if (newOrderNumberElem) {
+          newOrderNumberElem.value = generateOrderId();
+        }
+        
+        // Set today's date as default for new orders
+        const newOrderDateElem = document.getElementById('newOrderDate');
+        if (newOrderDateElem) {
+          newOrderDateElem.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Generate a new estimate number
+        const newEstimateNumberElem = document.getElementById('newEstimateNumber');
+        if (newEstimateNumberElem) {
+          newEstimateNumberElem.value = generateEstimateId();
+        }
+        
+        // Set today's date as default for new estimates
+        const newEstimateDateElem = document.getElementById('newEstimateDate');
+        if (newEstimateDateElem) {
+          newEstimateDateElem.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Check if we need to show a specific estimate (from reports page)
+        checkForEstimateToView();
+      } catch (error) {
+        console.error('Error during page initialization:', error);
+        alert('Failed to initialize the page. Please refresh and try again.');
+      }
+    });
+
+    // Function to check if we need to view a specific estimate
+    function checkForEstimateToView() {
+      // Check URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewType = urlParams.get('view');
+      const id = urlParams.get('id');
+      
+      // Check session storage for view-estimate-id
+      const storedEstimateId = sessionStorage.getItem('view-estimate-id');
+      
+      if ((viewType === 'estimate' && id) || storedEstimateId) {
+        const estimateId = id || storedEstimateId;
+        
+        // Switch to estimates tab
+        showEstimates();
+        
+        // Find the estimate index
+        const index = estimates.findIndex(est => est.id === estimateId);
+        
+        if (index !== -1) {
+          // View the estimate
+          setTimeout(() => {
+            viewEstimate(index);
+            
+            // Clear the session storage
+            sessionStorage.removeItem('view-estimate-id');
+          }, 300);
+        }
+      }
+    }
+
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = 'login.html';
+    }
+
+    const user = JSON.parse(userString);
+    let orders = [];
+    let orderItems = [];
+    let estimates = [];
+    let selectedOrderIndex = null;
+    let selectedEstimateIndex = null;
+    let productInventory = {}; // Will be populated from API
+    let products = []; // Will be populated from API
+    
+    // Function to load products and inventory data
+    async function loadProductsAndInventory() {
+      try {
+        products = await window.api.getProducts();
+        const inventory = await window.api.getInventory();
+        
+        // Create product inventory map
+        inventory.forEach(item => {
+          productInventory[item.code] = {
+            stock: item.quantity || 0,
+            location: item.location || 'Main Warehouse',
+            lastUpdated: new Date().toISOString().slice(0, 10)
+          };
+        });
+        
+        console.log('Products loaded:', products);
+        console.log('Inventory loaded:', productInventory);
+      } catch (error) {
+        console.error('Error loading products and inventory:', error);
+        alert('Could not load product data. Please try again.');
+      }
+    }
+
+    // Listen for product updates from product.html page
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'product-update-timestamp') {
+        console.log('Detected product changes in sales page, refreshing data');
+        loadProductsAndInventory();
+        
+        // If order detail is open, refresh it
+        if (selectedOrderIndex !== null && !document.getElementById('order-detail-section').classList.contains('hidden')) {
+          showOrderDetail(document.querySelector('.editable') !== null);
+        }
+        
+        // If estimate detail is open, refresh it
+        if (selectedEstimateIndex !== null && !document.getElementById('estimate-detail-section').classList.contains('hidden')) {
+          showEstimateDetail(document.querySelector('.editable') !== null);
+        }
+      }
+      
+      // Listen for estimate updates from other tabs/windows
+      if (event.key === 'estimate-update-timestamp') {
+        console.log('Detected estimate changes from another tab');
+        loadEstimates();
+      }
+    });
+    
+    // Check for product updates periodically
+    setInterval(() => {
+      const lastUpdateTime = sessionStorage.getItem('last-sales-product-check');
+      const currentUpdateTime = sessionStorage.getItem('product-update-timestamp');
+      
+      if (lastUpdateTime !== currentUpdateTime && currentUpdateTime) {
+        console.log('Detected product changes, refreshing data');
+        sessionStorage.setItem('last-sales-product-check', currentUpdateTime);
+        loadProductsAndInventory();
+      }
+    }, 5000);
+
+    // Function to show orders section
+    function showOrders() {
+      document.getElementById('orders-section').classList.remove('hidden');
+      document.getElementById('estimates-section').classList.add('hidden');
+      
+      // Ensure both orders and estimates are loaded before rendering
+      Promise.all([loadOrders(), loadEstimates()])
+        .then(() => {
+          renderOrdersTable(); // This will now have both orders and estimates data
+        })
+        .catch(error => {
+          console.error('Error loading data:', error);
+          alert('Failed to load order data. Please try again.');
+        });
+    }
+
+    // Function to show estimates section
+    function showEstimates() {
+      document.getElementById('orders-section').classList.add('hidden');
+      document.getElementById('estimates-section').classList.remove('hidden');
+      
+      // Load estimates and render when complete
+      loadEstimates()
+        .then(() => {
+          renderEstimatesTable();
+        })
+        .catch(error => {
+          console.error('Error loading estimates data:', error);
+          alert('Failed to load estimates data. Please try again.');
+        });
+    }
+
+    // Function to show add order form
+    function showAddOrderForm() {
+      document.getElementById('order-form').classList.remove('hidden');
+      document.getElementById('orderNumber').value = 'ORD-' + (orders.length + 1).toString().padStart(3, '0');
+      document.getElementById('orderDate').valueAsDate = new Date();
+      document.getElementById('customerName').value = '';
+      orderItems = [];
+    }
+
+    // Function to cancel order creation
+    function cancelOrder() {
+      document.getElementById('order-form').classList.add('hidden');
+    }
+
+    // Function to add item to current order
+    function addItemToOrder() {
+      const productCode = document.getElementById('newProductCode').value;
+      const quantity = parseInt(document.getElementById('newProductQuantity').value) || 0;
+      
+      if (!productCode) {
+        alert('Please enter a product code');
+        return;
+      }
+      
+      const product = products.find(p => p.code === productCode);
+      if (!product) {
+        alert('Product not found. Please check the product code.');
+        return;
+      }
+      
+      if (quantity <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+      }
+      
+      // Check inventory availability
+      const inventory = productInventory[productCode];
+      if (!inventory || inventory.stock < quantity) {
+        alert(`Cannot add item. Insufficient inventory.\nRequested: ${quantity}\nAvailable: ${inventory ? inventory.stock : 0}`);
+        return;
+      }
+      
+      const total = product.price * quantity;
+      
+      orderItems.push({
+        srNumber: orderItems.length + 1,
+        productCode: product.code,
+        name: product.name,
+        category: product.category || '-',
+        size: product.size || '-',
+        quantity: quantity,
+        rate: product.price,
+        total: total
+      });
+      
+      // Reset the input fields
+      document.getElementById('newProductCode').value = '';
+      document.getElementById('newProductName').textContent = '-';
+      document.getElementById('newProductCategory').textContent = '-';
+      document.getElementById('newProductSize').textContent = '-';
+      document.getElementById('newProductQuantity').value = '0';
+      document.getElementById('newProductRate').textContent = '-';
+      document.getElementById('newProductTotal').textContent = '₹0';
+      
+      // Remove stock info if exists
+      const oldStockInfo = document.getElementById('stock-info');
+      if (oldStockInfo) {
+        oldStockInfo.remove();
+      }
+      
+      renderOrderItems();
+    }
+    
+    // Function to update product info when code is entered
+    document.getElementById('newProductCode').addEventListener('change', async function() {
+      const productCode = this.value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        document.getElementById('newProductName').textContent = product.name;
+        document.getElementById('newProductCategory').textContent = product.category || '-';
+        document.getElementById('newProductSize').textContent = product.size || '-';
+        document.getElementById('newProductRate').textContent = '₹' + product.price;
+        
+        // Update quantity input with max available stock
+        const inventory = productInventory[product.code];
+        if (inventory) {
+          const maxQuantity = inventory.stock;
+          document.getElementById('newProductQuantity').max = maxQuantity;
+          
+          // Add a visual indicator of stock availability
+          const stockInfo = document.createElement('small');
+          stockInfo.id = 'stock-info';
+          stockInfo.style.display = 'block';
+          stockInfo.style.marginTop = '5px';
+          
+          if (maxQuantity === 0) {
+            stockInfo.style.color = '#dc3545';
+            stockInfo.textContent = 'Out of stock';
+          } else if (maxQuantity < 10) {
+            stockInfo.style.color = '#ffc107';
+            stockInfo.textContent = `Low stock: ${maxQuantity} available`;
+          } else {
+            stockInfo.style.color = '#28a745';
+            stockInfo.textContent = `In stock: ${maxQuantity} available`;
+          }
+          
+          // Remove previous stock info if exists
+          const oldStockInfo = document.getElementById('stock-info');
+          if (oldStockInfo) {
+            oldStockInfo.remove();
+          }
+          
+          document.getElementById('newProductQuantity').after(stockInfo);
+        }
+      } else {
+        document.getElementById('newProductName').textContent = '-';
+        document.getElementById('newProductCategory').textContent = '-';
+        document.getElementById('newProductSize').textContent = '-';
+        document.getElementById('newProductRate').textContent = '-';
+        
+        // Remove stock info if exists
+        const oldStockInfo = document.getElementById('stock-info');
+        if (oldStockInfo) {
+          oldStockInfo.remove();
+        }
+      }
+    });
+    
+    // Function to update total when quantity is changed
+    document.getElementById('newProductQuantity').addEventListener('change', function() {
+      const quantity = parseInt(this.value) || 0;
+      const productCode = document.getElementById('newProductCode').value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        const total = product.price * quantity;
+        document.getElementById('newProductTotal').textContent = '₹' + total;
+      }
+    });
+    
+    // Function to render order items
+    function renderOrderItems() {
+      const tbody = document.getElementById('order-items-body');
+      
+      // Keep the first row (input row) and remove the rest
+      while (tbody.childNodes.length > 1) {
+        tbody.removeChild(tbody.lastChild);
+      }
+      
+      orderItems.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.srNumber}</td>
+          <td>${item.productCode}</td>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>${item.size}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.rate}</td>
+          <td>₹${item.total}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="removeOrderItem(${item.srNumber})">Remove</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Function to remove order item
+    function removeOrderItem(srNumber) {
+      orderItems = orderItems.filter(item => item.srNumber !== srNumber);
+      
+      // Recalculate srNumbers
+      orderItems = orderItems.map((item, index) => ({
+        ...item,
+        srNumber: index + 1
+      }));
+      
+      renderOrderItems();
+    }
+    
+    // Function to broadcast order updates to other pages
+    function broadcastOrderUpdate(action, order) {
+      // Create a custom event that can be listened to by other pages
+      const event = new CustomEvent('order-update', {
+        detail: { action, order }
+      });
+      
+      // Dispatch the event to window for local updates
+      window.dispatchEvent(event);
+      
+      // Also store latest version in sessionStorage for cross-page updates
+      const timestamp = new Date().getTime();
+      sessionStorage.setItem('order-update-timestamp', timestamp.toString());
+      sessionStorage.setItem('order-update-action', action);
+      sessionStorage.setItem('order-update-data', JSON.stringify(order));
+    }
+    
+    // Function to save order
+    async function saveOrder() {
+      const orderNumber = document.getElementById('orderNumber').value;
+      const orderDate = document.getElementById('orderDate').value;
+      const customerName = document.getElementById('customerName').value;
+      
+      if (!orderNumber || !orderDate || !customerName) {
+        alert('Please fill in all order details');
+        return;
+      }
+      
+      if (orderItems.length === 0) {
+        alert('Please add at least one item to the order');
+        return;
+      }
+      
+      const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+      
+      // Check if there's enough inventory for all items
+      let inventoryCheck = true;
+      const inventoryErrors = [];
+      
+      for (const item of orderItems) {
+        const inventory = productInventory[item.productCode];
+        if (!inventory || inventory.stock < item.quantity) {
+          inventoryCheck = false;
+          inventoryErrors.push(`${item.name} (${item.productCode}): Requested ${item.quantity}, only ${inventory ? inventory.stock : 0} available`);
+        }
+      }
+      
+      if (!inventoryCheck) {
+        alert(`Cannot create order due to insufficient inventory:\n\n${inventoryErrors.join('\n')}`);
+        return;
+      }
+      
+      // Create the order object
+      const newOrder = {
+        id: orderNumber,
+        date: orderDate,
+        customerName: customerName,
+        agentName: user.name || '',
+        items: orderItems,
+        totalItems: orderItems.length,
+        totalAmount: totalAmount
+      };
+      
+      try {
+        // Get user ID for created_by field
+        const userId = user.id || 1; // Default to user ID 1 if not available
+        
+        // Update inventory for each item
+        for (const item of orderItems) {
+          // Deduct the quantity from inventory
+          await window.api.updateInventory({
+            productId: products.find(p => p.code === item.productCode).id,
+            quantity: -item.quantity, // Negative to deduct from inventory
+            location: productInventory[item.productCode].location,
+            userId: userId  // Add the userId parameter
+          });
+        }
+        
+        // Add the order
+        orders.push(newOrder);
+        
+        // Save to localStorage
+        localStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Broadcast the order update to other pages
+        broadcastOrderUpdate('add', newOrder);
+        
+        // Reset the form
+        document.getElementById('order-form').classList.add('hidden');
+        
+        // Reload products and inventory to reflect changes
+        await loadProductsAndInventory();
+        
+        // Update UI
+        renderOrdersTable();
+        
+        alert('Order saved successfully and inventory updated');
+      } catch (error) {
+        console.error('Error saving order:', error);
+        alert('Failed to save order. Please try again.');
+      }
+    }
+
+    // Function to load orders from database
+    async function loadOrders() {
+      try {
+        // Ensure products and inventory are loaded
+        if (products.length === 0) {
+          await loadProductsAndInventory();
+        }
+        
+        // Try to get orders from the database
+        try {
+          // This would be the actual API call in a real implementation
+          // orders = await window.api.getAllOrders();
+          
+          // For now, use localStorage
+          const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          if (storedOrders.length > 0) {
+            orders = storedOrders;
+          } else if (orders.length === 0) {
+            // Fallback sample data
+            // orders = [
+            //   {
+            //     id: "ORD-001",
+            //     date: "2023-05-15",
+            //     customerName: "John Doe",
+            //     agentName: user.name || "Admin",
+            //     totalItems: 3,
+            //     totalAmount: 4500,
+            //     items: [
+            //       { srNumber: 1, productCode: products[0]?.code || 'P001', name: products[0]?.name || 'Product 1', category: products[0]?.category || 'Electronics', size: products[0]?.size || 'M', quantity: 2, rate: products[0]?.price || 1200, total: (products[0]?.price || 1200) * 2 },
+            //       // Add more items using real products if available
+            //       { srNumber: 2, productCode: products[1]?.code || 'P002', name: products[1]?.name || 'Product 2', category: products[1]?.category || 'Home', size: products[1]?.size || 'S', quantity: 1, rate: products[1]?.price || 750, total: products[1]?.price || 750 }
+            //     ]
+            //   }
+            // ];
+          }
+        } catch (error) {
+          console.error('Error loading orders from API:', error);
+          // Use localStorage as fallback
+          const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          if (storedOrders.length > 0) {
+            orders = storedOrders;
+          }
+        }
+        
+        // Render the orders table but don't return here
+        // since this is now called within showOrders
+        return orders;
+      } catch (error) {
+        console.error('Error in loadOrders:', error);
+        throw new Error('Failed to load orders. Please try again.');
+      }
+    }
+
+    // Function to render orders table
+    function renderOrdersTable() {
+      const tbody = document.getElementById('orders-table-body');
+      tbody.innerHTML = '';
+      
+      orders.forEach((order, index) => {
+        const row = document.createElement('tr');
+        
+        // Check if order has associated estimate - ensure it works on initial load
+        let statusDisplay = 'No Estimate';
+        let actionButtons = `
+          <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
+            <button class="btn btn-info btn-sm" onclick="viewOrder(${index})">View</button>
+            <button class="btn btn-success btn-sm" onclick="editOrder(${index})">Edit</button>
+        `;
+        
+        // Find the associated estimate - use full comparison to ensure it works initially
+        const associatedEstimate = estimates.find(est => est.orderId === order.id);
+        
+        if (associatedEstimate) {
+          statusDisplay = `Estimate: ${associatedEstimate.id}`;
+          actionButtons += `
+            <button class="btn btn-secondary btn-sm" onclick="viewEstimateByID('${associatedEstimate.id}')">View Estimate</button>
+          `;
+        } else {
+          actionButtons += `
+            <button class="btn btn-primary btn-sm" onclick="generateEstimateFromOrder(${index})">Generate Estimate</button>
+          `;
+        }
+        
+        actionButtons += `</div>`;
+        
+        row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${new Date(order.date).toLocaleDateString()}</td>
+          <td>${order.customerName}</td>
+          <td>₹${order.totalAmount}</td>
+          <td>${statusDisplay}</td>
+          <td>
+            ${actionButtons}
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Function to view order
+    function viewOrder(index) {
+      selectedOrderIndex = index;
+      showOrderDetail(false);
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    // Function to edit order
+    function editOrder(index) {
+      selectedOrderIndex = index;
+      showOrderDetail(true);
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    // Function to show order detail
+    function showOrderDetail(editable) {
+      document.getElementById('order-detail-section').classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+      const orderDetailBody = document.getElementById('order-details-body');
+      orderDetailBody.innerHTML = '';
+      
+      if (selectedOrderIndex !== null) {
+        const order = orders[selectedOrderIndex];
+        
+        order.items.forEach(item => {
+          const row = document.createElement('tr');
+          
+          // Get current inventory for this product
+          const inventory = productInventory[item.productCode] || { stock: 0, location: 'Unknown' };
+          let stockDisplay = '';
+          
+          if (inventory.stock === 0) {
+            stockDisplay = `<span class="stock-level low">Out of Stock</span>`;
+          } else if (inventory.stock < 10) {
+            stockDisplay = `<span class="stock-level low">Low: ${inventory.stock}</span>`;
+          } else if (inventory.stock < 50) {
+            stockDisplay = `<span class="stock-level medium">Medium: ${inventory.stock}</span>`;
+          } else {
+            stockDisplay = `<span class="stock-level high">High: ${inventory.stock}</span>`;
+          }
+          
+          if (editable) {
+            row.innerHTML = `
+              <td>${item.srNumber}</td>
+              <td><input type="text" class="editable" value="${item.productCode}" onchange="updateDetailProductCode(${item.srNumber}, this.value)"></td>
+              <td>${item.name}</td>
+              <td>${item.category}</td>
+              <td>${item.size}</td>
+              <td><input type="number" class="editable" value="${item.quantity}" onchange="updateDetailQuantity(${item.srNumber}, this.value)"></td>
+              <td><input type="number" class="editable" value="${item.rate}" onchange="updateDetailRate(${item.srNumber}, this.value)"></td>
+              <td>₹${item.total}</td>
+              <td>${stockDisplay}</td>
+            `;
+          } else {
+            row.innerHTML = `
+              <td>${item.srNumber}</td>
+              <td>${item.productCode}</td>
+              <td>${item.name}</td>
+              <td>${item.category}</td>
+              <td>${item.size}</td>
+              <td>${item.quantity}</td>
+              <td>₹${item.rate}</td>
+              <td>₹${item.total}</td>
+              <td>${stockDisplay}</td>
+            `;
+          }
+          
+          orderDetailBody.appendChild(row);
+        });
+
+        // When in edit mode, add a new row for adding products
+        if (editable) {
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+            <td>${order.items.length + 1}</td>
+            <td><input type="text" class="editable" id="newDetailProductCode" placeholder="Product code"></td>
+            <td id="newDetailProductName">-</td>
+            <td id="newDetailProductCategory">-</td>
+            <td id="newDetailProductSize">-</td>
+            <td><input type="number" class="editable" id="newDetailProductQuantity" value="" min="0"></td>
+            <td id="newDetailProductRate">-</td>
+            <td id="newDetailProductTotal">₹0</td>
+            <td id="newDetailProductAvailability">-</td>
+            <td><button class="btn btn-success btn-sm" onclick="addNewProductToOrder()">Add</button></td>
+          `;
+          orderDetailBody.appendChild(newRow);
+
+          // Add event listener for product code field
+          setTimeout(() => {
+            const newProductCodeInput = document.getElementById('newDetailProductCode');
+            if (newProductCodeInput) {
+              newProductCodeInput.addEventListener('change', updateNewDetailProductInfo);
+            }
+
+            const newProductQuantityInput = document.getElementById('newDetailProductQuantity');
+            if (newProductQuantityInput) {
+              newProductQuantityInput.addEventListener('change', updateNewDetailProductTotal);
+            }
+          }, 100);
+        }
+
+        // Add save button if in edit mode
+        const modalContent = document.querySelector('.order-edit-section');
+        const existingSaveButton = document.getElementById('save-order-changes-btn');
+        
+        if (editable && !existingSaveButton) {
+          const saveButtonContainer = document.createElement('div');
+          saveButtonContainer.style.textAlign = 'right';
+          saveButtonContainer.style.marginTop = '20px';
+          saveButtonContainer.innerHTML = `
+            <button id="save-order-changes-btn" class="btn btn-primary" onclick="saveOrderChanges()">Save Changes</button>
+          `;
+          modalContent.appendChild(saveButtonContainer);
+        } else if (!editable && existingSaveButton) {
+          existingSaveButton.parentElement.remove();
+        }
+      }
+    }
+
+    // Function to handle adding a new product to an existing order
+    function addNewProductToOrder() {
+      if (selectedOrderIndex === null) return;
+      
+      const productCode = document.getElementById('newDetailProductCode').value;
+      const quantity = parseInt(document.getElementById('newDetailProductQuantity').value) || 0;
+      
+      if (!productCode) {
+        alert('Please enter a product code');
+        return;
+      }
+      
+      const product = products.find(p => p.code === productCode);
+      if (!product) {
+        alert('Product not found. Please check the product code.');
+        return;
+      }
+      
+      if (quantity <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+      }
+      
+      // Check inventory availability
+      const stock = productInventory[productCode]?.stock || 0;
+      if (stock === 0) {
+        alert('This product is out of stock. Please select a different product.');
+        return;
+      }
+      
+      if (quantity > stock) {
+        alert(`Only ${stock} units available in stock. Please adjust the quantity.`);
+        return;
+      }
+      
+      const total = product.price * quantity;
+      const order = orders[selectedOrderIndex];
+      
+      // Check if the product is already in the order
+      const existingItemIndex = order.items.findIndex(item => item.productCode === productCode);
+      
+      if (existingItemIndex !== -1) {
+        alert(`This product is already in the order. Please update the quantity instead.`);
+        return;
+      }
+      
+      // Update local inventory immediately for live stock tracking
+      productInventory[productCode].stock -= quantity;
+      
+      // Add new item to order
+      const newItem = {
+        srNumber: order.items.length + 1,
+        productCode: product.code,
+        name: product.name,
+        category: product.category || '-',
+        size: product.size || '-',
+        quantity: quantity,
+        rate: product.price,
+        total: total,
+        stock: productInventory[productCode].stock // Use updated stock value
+      };
+      
+      order.items.push(newItem);
+      
+      // Update total amount
+      order.totalAmount = order.items.reduce((sum, item) => sum + item.total, 0);
+      order.totalItems = order.items.length;
+      
+      // Update localStorage
+      localStorage.setItem('orders', JSON.stringify(orders));
+      
+      // Refresh the order detail view
+      showOrderDetail(true);
+    }
+
+    // Function to update new product info when code is entered
+    function updateNewDetailProductInfo() {
+      const productCode = this.value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        document.getElementById('newDetailProductName').textContent = product.name;
+        document.getElementById('newDetailProductCategory').textContent = product.category || '-';
+        document.getElementById('newDetailProductSize').textContent = product.size || '-';
+        document.getElementById('newDetailProductRate').textContent = '₹' + product.price;
+        
+        // Update quantity input with max available stock
+        const stock = productInventory[productCode]?.stock || 0;
+        let availabilityClass = 'high';
+        let availabilityText = 'In Stock';
+        
+        if (stock === 0) {
+          availabilityClass = 'low';
+          availabilityText = 'Out of Stock';
+        } else if (stock < 10) {
+          availabilityClass = 'low';
+          availabilityText = 'Low Stock';
+        } else if (stock < 50) {
+          availabilityClass = 'medium';
+          availabilityText = 'Medium Stock';
+        }
+        
+        document.getElementById('newDetailProductAvailability').innerHTML = 
+          `<span class="stock-level ${availabilityClass}">${availabilityText}: ${stock}</span>`;
+      } else {
+        document.getElementById('newDetailProductName').textContent = '-';
+        document.getElementById('newDetailProductCategory').textContent = '-';
+        document.getElementById('newDetailProductSize').textContent = '-';
+        document.getElementById('newDetailProductRate').textContent = '-';
+        document.getElementById('newDetailProductAvailability').textContent = '-';
+      }
+    }
+
+    // Function to update total when quantity is changed
+    function updateNewDetailProductTotal() {
+      const quantity = parseInt(this.value) || 0;
+      const productCode = document.getElementById('newDetailProductCode').value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        const total = product.price * quantity;
+        document.getElementById('newDetailProductTotal').textContent = '₹' + total;
+        
+        // Validate quantity against available stock
+        const stock = productInventory[productCode]?.stock || 0;
+        if (quantity > stock) {
+          alert(`Only ${stock} units available in stock. Please adjust the quantity.`);
+          this.value = stock;
+          const newTotal = product.price * stock;
+          document.getElementById('newDetailProductTotal').textContent = '₹' + newTotal;
+        }
+      }
+    }
+
+    // Function to update detail quantity in detail view
+    function updateDetailQuantity(srNumber, value) {
+      if (selectedOrderIndex !== null) {
+        const order = orders[selectedOrderIndex];
+        const item = order.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          const originalQuantity = item.quantity;
+          const newQuantity = parseInt(value) || 0;
+          
+          // Check if we have enough inventory if increasing quantity
+          if (newQuantity > originalQuantity) {
+            const product = products.find(p => p.code === item.productCode);
+            const availableStock = productInventory[item.productCode]?.stock || 0;
+            const additionalQuantity = newQuantity - originalQuantity;
+            
+            if (additionalQuantity > availableStock) {
+              alert(`Cannot increase quantity. Only ${availableStock} units available in stock.`);
+              // Reset to maximum possible value
+              const maxPossible = originalQuantity + availableStock;
+              item.quantity = maxPossible;
+              // Refresh the UI to show the corrected value
+              showOrderDetail(true);
+              return;
+            }
+          }
+          
+          // Update the quantity
+          item.quantity = newQuantity;
+          item.total = item.quantity * item.rate;
+          order.totalAmount = order.items.reduce((sum, item) => sum + item.total, 0);
+          
+          // Update inventory immediately for real-time tracking
+          if (newQuantity !== originalQuantity) {
+            const diff = originalQuantity - newQuantity;
+            console.log(`Live inventory update for ${item.productCode}: ${diff > 0 ? 'adding' : 'removing'} ${Math.abs(diff)} units`);
+            
+            // If diff is positive, we're reducing the order quantity, so add back to inventory
+            // If diff is negative, we're increasing the order quantity, so reduce inventory
+            if (productInventory[item.productCode]) {
+              productInventory[item.productCode].stock += diff;
+              console.log(`Updated local inventory for ${item.productCode}: now ${productInventory[item.productCode].stock} units`);
+              
+              // Update product availability display
+              const rows = document.getElementById('order-details-body').getElementsByTagName('tr');
+              for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const rowProductCode = cells[1].querySelector('input')?.value || cells[1].textContent;
+                
+                if (rowProductCode === item.productCode) {
+                  const stock = productInventory[item.productCode].stock;
+                  let stockClass = 'high';
+                  let stockText = 'High';
+                  
+                  if (stock === 0) {
+                    stockClass = 'low';
+                    stockText = 'Out of Stock';
+                  } else if (stock < 10) {
+                    stockClass = 'low';
+                    stockText = 'Low';
+                  } else if (stock < 50) {
+                    stockClass = 'medium';
+                    stockText = 'Medium';
+                  }
+                  
+                  // Update the availability cell
+                  cells[8].innerHTML = `<span class="stock-level ${stockClass}">${stockText}: ${stock}</span>`;
+                }
+              }
+              
+              // Also update the new product input row if it's showing the same product
+              const newDetailProductCode = document.getElementById('newDetailProductCode');
+              if (newDetailProductCode && newDetailProductCode.value === item.productCode) {
+                const availabilityCell = document.getElementById('newDetailProductAvailability');
+                if (availabilityCell) {
+                  const stock = productInventory[item.productCode].stock;
+                  let stockClass = 'high';
+                  let stockText = 'In Stock';
+                  
+                  if (stock === 0) {
+                    stockClass = 'low';
+                    stockText = 'Out of Stock';
+                  } else if (stock < 10) {
+                    stockClass = 'low';
+                    stockText = 'Low Stock';
+                  } else if (stock < 50) {
+                    stockClass = 'medium';
+                    stockText = 'Medium Stock';
+                  }
+                  
+                  availabilityCell.innerHTML = `<span class="stock-level ${stockClass}">${stockText}: ${stock}</span>`;
+                }
+              }
+              
+              // Force inventory refresh across all pages including inventory.html
+              forceInventoryRefresh();
+            }
+          }
+          
+          // Update localStorage
+          localStorage.setItem('orders', JSON.stringify(orders));
+          
+          // Broadcast inventory changes to other pages
+          broadcastInventoryUpdate(item.productCode, productInventory[item.productCode]?.stock || 0);
+          
+          showOrderDetail(true);
+        }
+      }
+    }
+
+    // Function to broadcast inventory updates to other pages
+    function broadcastInventoryUpdate(productCode, newStock) {
+      console.log(`Broadcasting inventory update for ${productCode}: ${newStock} units`);
+      
+      // Method 1: Use localStorage for cross-tab communication
+      const timestamp = new Date().getTime();
+      localStorage.setItem('inventory-update-timestamp', timestamp.toString());
+      localStorage.setItem('inventory-update-product', productCode);
+      localStorage.setItem('inventory-update-stock', newStock.toString());
+      
+      // Method 2: Use a custom event for same-page communication
+      const event = new CustomEvent('inventory-update', {
+        detail: { productCode, newStock, timestamp }
+      });
+      window.dispatchEvent(event);
+      
+      // Method 3: Manually create and dispatch a storage event
+      try {
+        // Create a new storage event - this is important for cross-window communication
+        const storageEvent = new StorageEvent('storage', {
+          key: 'inventory-update-timestamp',
+          oldValue: null,
+          newValue: timestamp.toString(),
+          storageArea: localStorage
+        });
+        
+        // Dispatch the event to the current window
+        window.dispatchEvent(storageEvent);
+        
+        // For older browsers, we also use the following technique
+        // First, remove the item
+        localStorage.removeItem('inventory-update-force');
+        // Then add it back with a different value to trigger a change
+        localStorage.setItem('inventory-update-force', timestamp.toString());
+        
+        console.log('Successfully broadcasted inventory update');
+      } catch (e) {
+        console.warn('Could not dispatch storage event manually:', e);
+      }
+    }
+
+    // Add this function after the broadcastInventoryUpdate function
+    function forceInventoryRefresh() {
+      console.log("Forcing inventory refresh across all pages...");
+      
+      // Create a special flag that indicates a forced refresh is needed
+      const timestamp = Date.now();
+      
+      // Use a distinctive key that inventory.html is already listening for
+      localStorage.setItem('inventory-force-refresh', timestamp.toString());
+      
+      // Also update these keys to ensure compatibility with existing listeners
+      localStorage.setItem('inventory-update-timestamp', timestamp.toString());
+      localStorage.setItem('inventory-update-force', timestamp.toString());
+      localStorage.setItem('product-update-timestamp', timestamp.toString());
+      localStorage.setItem('order-update-timestamp', timestamp.toString());
+      
+      // Create and fire a storage event manually
+      try {
+        const event = new StorageEvent('storage', {
+          key: 'inventory-force-refresh',
+          newValue: timestamp.toString(),
+          oldValue: null,
+          storageArea: localStorage
+        });
+        window.dispatchEvent(event);
+        console.log("Successfully dispatched forced inventory refresh event");
+      } catch (err) {
+        console.warn("Could not dispatch storage event manually:", err);
+      }
+      
+      // Try alternate method for cross-tab communication
+      try {
+        // Remove and set to force event triggering
+        localStorage.removeItem('inventory-trigger-refresh');
+        localStorage.setItem('inventory-trigger-refresh', timestamp.toString());
+        console.log("Successfully used alternate method for cross-tab notification");
+      } catch (err) {
+        console.warn("Error with alternate notification method:", err);
+      }
+    }
+
+    // Function to save order changes including inventory updates
+    async function saveOrderChanges() {
+      if (selectedOrderIndex === null) return;
+      
+      const order = orders[selectedOrderIndex];
+      const originalOrder = JSON.parse(localStorage.getItem('orders') || '[]')[selectedOrderIndex];
+      
+      try {
+        // Show loading indicator or disable the save button
+        const saveButton = document.getElementById('save-order-changes-btn');
+        if (saveButton) {
+          saveButton.textContent = "Saving...";
+          saveButton.disabled = true;
+        }
+        
+        // Get current user for created_by field
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+        const userId = user.id || 1; // Default to user ID 1 if not available
+        
+        // Create a copy of the inventory before changes for comparison later
+        const originalInventory = JSON.parse(JSON.stringify(productInventory));
+        
+        // Track all inventory changes to broadcast them later
+        const inventoryChanges = [];
+        
+        console.log("Starting inventory updates for order save...");
+        
+        // Update inventory for each item
+        for (const item of order.items) {
+          const originalItem = originalOrder.items.find(i => i.productCode === item.productCode);
+          
+          // If item is new or quantity changed
+          if (!originalItem || originalItem.quantity !== item.quantity) {
+            const quantityDiff = originalItem ? item.quantity - originalItem.quantity : item.quantity;
+            
+            if (quantityDiff !== 0) {
+              console.log(`Updating inventory for ${item.productCode}: ${quantityDiff > 0 ? 'removing' : 'adding'} ${Math.abs(quantityDiff)} units`);
+              
+              try {
+                // Update inventory through API
+                const updateResult = await window.api.updateInventory({
+                  productId: products.find(p => p.code === item.productCode).id,
+                  quantity: -quantityDiff, // Negative to deduct from inventory
+                  location: productInventory[item.productCode]?.location || 'Main Warehouse',
+                  userId: userId
+                });
+                
+                console.log(`API update result for ${item.productCode}:`, updateResult);
+                
+                // Update local inventory data
+                if (productInventory[item.productCode]) {
+                  const oldStock = productInventory[item.productCode].stock;
+                  productInventory[item.productCode].stock -= quantityDiff;
+                  const newStock = productInventory[item.productCode].stock;
+                  
+                  console.log(`Updated local inventory for ${item.productCode}: ${oldStock} -> ${newStock} (${-quantityDiff})`);
+                  
+                  // Add to inventory changes list
+                  inventoryChanges.push({
+                    productCode: item.productCode,
+                    oldStock: oldStock,
+                    newStock: newStock,
+                    change: -quantityDiff
+                  });
+                }
+              } catch (error) {
+                console.error(`Error updating inventory for ${item.productCode}:`, error);
+                throw error;
+              }
+            }
+          }
+        }
+        
+        // Check for removed items to return to inventory
+        for (const originalItem of originalOrder.items) {
+          const currentItem = order.items.find(i => i.productCode === originalItem.productCode);
+          
+          if (!currentItem) {
+            console.log(`Returning ${originalItem.quantity} units of ${originalItem.productCode} to inventory (item removed)`);
+            
+            try {
+              // Item was removed, add stock back to inventory
+              const updateResult = await window.api.updateInventory({
+                productId: products.find(p => p.code === originalItem.productCode).id,
+                quantity: originalItem.quantity, // Positive to add back to inventory
+                location: productInventory[originalItem.productCode]?.location || 'Main Warehouse',
+                userId: userId
+              });
+              
+              console.log(`API return result for ${originalItem.productCode}:`, updateResult);
+              
+              // Update local inventory data
+              if (productInventory[originalItem.productCode]) {
+                const oldStock = productInventory[originalItem.productCode].stock;
+                productInventory[originalItem.productCode].stock += originalItem.quantity;
+                const newStock = productInventory[originalItem.productCode].stock;
+                
+                console.log(`Updated local inventory for ${originalItem.productCode}: ${oldStock} -> ${newStock} (+${originalItem.quantity})`);
+                
+                // Add to inventory changes list
+                inventoryChanges.push({
+                  productCode: originalItem.productCode,
+                  oldStock: oldStock,
+                  newStock: newStock,
+                  change: originalItem.quantity
+                });
+              }
+            } catch (error) {
+              console.error(`Error returning inventory for ${originalItem.productCode}:`, error);
+              throw error;
+            }
+          }
+        }
+        
+        // Save the updated order
+        orders[selectedOrderIndex] = order;
+        localStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Broadcast the order update
+        broadcastOrderUpdate('update', order);
+        
+        console.log(`Completed ${inventoryChanges.length} inventory updates, now broadcasting changes...`);
+        
+        // First, force a direct inventory refresh to ensure data consistency
+        try {
+          // Refresh products and inventory data to ensure up-to-date info
+          const updatedInventory = await window.api.getInventory();
+          console.log("Retrieved fresh inventory data from server, updating local cache");
+          
+          // Update the local productInventory cache with the latest data
+          updatedInventory.forEach(item => {
+            if (productInventory[item.code]) {
+              productInventory[item.code].stock = item.quantity;
+              console.log(`Updated local cache for ${item.code}: now ${item.quantity} units`);
+            }
+          });
+          
+          // Store this fresh data where inventory.html can access it
+          localStorage.setItem('inventory-data', JSON.stringify(updatedInventory));
+          localStorage.setItem('inventory-last-update', Date.now().toString());
+        } catch (error) {
+          console.error("Error refreshing inventory data:", error);
+        }
+        
+        // Now force inventory refresh across all pages
+        forceInventoryRefresh();
+        
+        // Additionally broadcast each individual inventory change for real-time updates
+        for (const change of inventoryChanges) {
+          const updateTime = Date.now();
+          console.log(`Broadcasting specific update for ${change.productCode}: ${change.oldStock} -> ${change.newStock}`);
+          
+          // Store detailed info about this inventory change
+          localStorage.setItem(`inventory-item-${change.productCode}`, JSON.stringify({
+            code: change.productCode,
+            quantity: change.newStock,
+            change: change.change,
+            timestamp: updateTime
+          }));
+          
+          // Use the combined approach with both storage events and custom keys
+          localStorage.setItem('inventory-update-product', change.productCode);
+          localStorage.setItem('inventory-update-stock', change.newStock.toString());
+          localStorage.setItem('inventory-update-timestamp', updateTime.toString());
+        }
+        
+        // Log inventory changes for debugging
+        console.log("Inventory changes summary:");
+        for (const change of inventoryChanges) {
+          console.log(`  ${change.productCode}: ${change.oldStock} -> ${change.newStock} (${change.change > 0 ? '+' : ''}${change.change})`);
+        }
+        
+        // Update UI
+        renderOrdersTable();
+        
+        // Close detail view
+        closeOrderDetail();
+        
+        // Reset save button
+        if (saveButton) {
+          saveButton.textContent = "Save Changes";
+          saveButton.disabled = false;
+        }
+        
+        alert('Order updated successfully and inventory adjusted');
+      } catch (error) {
+        console.error('Error updating order:', error);
+        
+        // Reset save button if it exists
+        const saveButton = document.getElementById('save-order-changes-btn');
+        if (saveButton) {
+          saveButton.textContent = "Save Changes";
+          saveButton.disabled = false;
+        }
+        
+        alert('Failed to update order. Please try again.');
+      }
+    }
+
+    // Function to update product code in detail view
+    function updateDetailProductCode(srNumber, value) {
+      if (selectedOrderIndex !== null) {
+        const order = orders[selectedOrderIndex];
+        const item = order.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          const product = products.find(p => p.code === value);
+          if (product) {
+            item.productCode = value;
+            item.name = product.name;
+            item.category = product.category;
+            item.size = product.size;
+            item.rate = product.price;
+            item.total = item.quantity * item.rate;
+            
+            // Update localStorage
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            showOrderDetail(true);
+          }
+        }
+      }
+    }
+
+    // Function to update detail rate in detail view
+    function updateDetailRate(srNumber, value) {
+      if (selectedOrderIndex !== null) {
+        const order = orders[selectedOrderIndex];
+        const item = order.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          item.rate = parseFloat(value) || 0;
+          item.total = item.quantity * item.rate;
+          order.totalAmount = order.items.reduce((sum, item) => sum + item.total, 0);
+          
+          // Update localStorage
+          localStorage.setItem('orders', JSON.stringify(orders));
+          
+          showOrderDetail(true);
+        }
+      }
+    }
+
+    // Function to generate estimate from order
+    function generateEstimateFromOrder(index) {
+      const order = orders[index];
+      
+      // Check if an estimate already exists for this order
+      if (estimates.some(est => est.orderId === order.id)) {
+        const existingEstimate = estimates.find(est => est.orderId === order.id);
+        alert(`Estimate already exists for this order: ${existingEstimate.id}`);
+        return;
+      }
+      
+      // Create new estimate from order
+      const estimateId = 'EST-' + (estimates.length + 1).toString().padStart(3, '0');
+      const user = JSON.parse(sessionStorage.getItem('user'));
+      
+      const newEstimate = {
+        id: estimateId,
+        orderId: order.id,
+        date: new Date().toISOString().split('T')[0],
+        customerName: order.customerName,
+        agentName: order.assigned_agent || order.agentName || (user ? user.name : 'Unknown'),
+        totalItems: order.items.length,
+        totalAmount: order.totalAmount,
+        status: 'Pending',
+        items: [...order.items]
+      };
+      
+      estimates.push(newEstimate);
+      
+      // Save to localStorage
+      localStorage.setItem('estimates', JSON.stringify(estimates));
+      
+      // Broadcast the estimate update to other pages
+      broadcastEstimateUpdate('add', newEstimate);
+      
+      alert(`Estimate ${estimateId} has been generated from order ${order.id}`);
+      
+      // Refresh orders table to show updated status
+      renderOrdersTable();
+    }
+
+    // Function to load estimates from database or localStorage
+    async function loadEstimates() {
+      try {
+        // Ensure products and inventory are loaded
+        if (products.length === 0) {
+          await loadProductsAndInventory();
+        }
+        
+        // Try to get estimates from the database
+        try {
+          // This would be the actual API call in a real implementation
+          // estimates = await window.api.getEstimates();
+          
+          // For now, use localStorage
+          const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          if (storedEstimates.length > 0) {
+            estimates = storedEstimates;
+          }
+        } catch (error) {
+          console.error('Error loading estimates from API:', error);
+          // Use localStorage as fallback
+          const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          if (storedEstimates.length > 0) {
+            estimates = storedEstimates;
+          }
+        }
+        
+        // Only render when specifically viewing estimates section, 
+        // not when loading for reference in orders section
+        if (!document.getElementById('estimates-section').classList.contains('hidden')) {
+          renderEstimatesTable();
+        }
+        
+        return estimates;
+      } catch (error) {
+        console.error('Error in loadEstimates:', error);
+        throw new Error('Failed to load estimates. Please try again.');
+      }
+    }
+
+    // Function to render estimates table
+    function renderEstimatesTable() {
+      const tbody = document.getElementById('estimates-table-body');
+      tbody.innerHTML = '';
+      
+      estimates.forEach((estimate, index) => {
+        // Format status text and style
+        const statusText = estimate.status === 'packed' || estimate.status === 'completed' ? 'Completed' : 'Pending';
+        const statusClass = statusText === 'Completed' ? 'status-badge-success' : 'status-badge-danger';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${estimate.id}</td>
+          <td>${new Date(estimate.date).toLocaleDateString()}</td>
+          <td>${estimate.customerName}</td>
+          <td>${estimate.agentName}</td>
+          <td>${estimate.totalItems}</td>
+          <td>₹${estimate.totalAmount}</td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td>
+            <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
+              <button class="btn btn-info btn-sm" onclick="viewEstimate(${index})">View</button>
+              <button class="btn btn-success btn-sm" onclick="editEstimate(${index})">Edit</button>
+              <button class="btn btn-danger btn-sm" style="background-color: #dc3545; border-color: #dc3545;" onclick="deleteEstimate(${index})">Delete</button>
+              <button class="btn btn-primary btn-sm" onclick="showPrintOptions(${index})">Print</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Function to delete an estimate
+    function deleteEstimate(index) {
+      if (confirm('Are you sure you want to delete this estimate?')) {
+        // Get the ID before deleting the estimate
+        const estimateId = estimates[index].id;
+        
+        // Remove the estimate from the array
+        estimates.splice(index, 1);
+        
+        // Save to localStorage
+        localStorage.setItem('estimates', JSON.stringify(estimates));
+        
+        // Broadcast the estimate update
+        broadcastEstimateUpdate('delete', { id: estimateId });
+        
+        // Refresh the estimates table
+        renderEstimatesTable();
+        
+        alert('Estimate deleted successfully');
+      }
+    }
+
+    // Function to view estimate
+    function viewEstimate(index) {
+      selectedEstimateIndex = index;
+      showEstimateDetail(false);
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+    
+    // Function to edit estimate
+    function editEstimate(index) {
+      selectedEstimateIndex = index;
+      showEstimateDetail(true);
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    // Function to show estimate detail
+    function showEstimateDetail(editable) {
+      document.getElementById('estimate-detail-section').classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+      
+      // Update header based on edit mode
+      updateEstimateDetailHeaders(editable);
+      
+      // Handle status edit section visibility
+      const statusEditSection = document.getElementById('estimate-status-edit');
+      
+      if (editable && selectedEstimateIndex !== null) {
+        // Show status edit section in edit mode
+        statusEditSection.classList.remove('hidden');
+        
+        // Set current status in dropdown
+        const estimate = estimates[selectedEstimateIndex];
+        const status = estimate.status === 'packed' ? 'completed' : estimate.status;
+        document.getElementById('estimate-detail-status').value = status;
+      } else {
+        // Hide status edit section in view mode
+        statusEditSection.classList.add('hidden');
+      }
+      
+      const estimateDetailBody = document.getElementById('estimate-details-body');
+      estimateDetailBody.innerHTML = '';
+      
+      if (selectedEstimateIndex !== null) {
+        const estimate = estimates[selectedEstimateIndex];
+        
+        estimate.items.forEach(item => {
+          const row = document.createElement('tr');
+          
+          // Get current inventory for this product
+          const inventory = productInventory[item.productCode] || { stock: 0, location: 'Unknown' };
+          let stockDisplay = '';
+          
+          if (inventory.stock === 0) {
+            stockDisplay = `<span class="stock-level low">Out of Stock</span>`;
+          } else if (inventory.stock < 10) {
+            stockDisplay = `<span class="stock-level low">Low: ${inventory.stock}</span>`;
+          } else if (inventory.stock < 50) {
+            stockDisplay = `<span class="stock-level medium">Medium: ${inventory.stock}</span>`;
+          } else {
+            stockDisplay = `<span class="stock-level high">High: ${inventory.stock}</span>`;
+          }
+          
+          if (editable) {
+            row.innerHTML = `
+              <td>${item.srNumber}</td>
+              <td><input type="text" class="editable" value="${item.productCode}" onchange="updateEstimateProductCode(${item.srNumber}, this.value)"></td>
+              <td>${item.name}</td>
+              <td>${item.category}</td>
+              <td>${item.size}</td>
+              <td><input type="number" class="editable" value="${item.quantity}" onchange="updateEstimateQuantity(${item.srNumber}, this.value)"></td>
+              <td><input type="number" class="editable" value="${item.rate}" onchange="updateEstimateRate(${item.srNumber}, this.value)"></td>
+              <td>₹${item.total}</td>
+              <td>${stockDisplay}</td>
+            `;
+          } else {
+            row.innerHTML = `
+              <td>${item.srNumber}</td>
+              <td>${item.productCode}</td>
+              <td>${item.name}</td>
+              <td>${item.category}</td>
+              <td>${item.size}</td>
+              <td>${item.quantity}</td>
+              <td>₹${item.rate}</td>
+              <td>₹${item.total}</td>
+              <td>${stockDisplay}</td>
+            `;
+          }
+          
+          estimateDetailBody.appendChild(row);
+        });
+        
+        // When in edit mode, add a new row for adding products
+        if (editable) {
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+            <td>${estimate.items.length + 1}</td>
+            <td><input type="text" class="editable" id="newEstimateProductCode" placeholder="Product code"></td>
+            <td id="newEstimateProductName">-</td>
+            <td id="newEstimateProductCategory">-</td>
+            <td id="newEstimateProductSize">-</td>
+            <td><input type="number" class="editable" id="newEstimateProductQuantity" value="1" min="1"></td>
+            <td id="newEstimateProductRate">-</td>
+            <td id="newEstimateProductTotal">₹0</td>
+            <td id="newEstimateProductAvailability">-</td>
+            <td><button class="btn btn-success btn-sm" onclick="addNewProductToEstimate()">Add</button></td>
+          `;
+          estimateDetailBody.appendChild(newRow);
+
+          // Add event listener for product code field
+          setTimeout(() => {
+            const newProductCodeInput = document.getElementById('newEstimateProductCode');
+            if (newProductCodeInput) {
+              newProductCodeInput.addEventListener('change', updateNewEstimateProductInfo);
+            }
+
+            const newProductQuantityInput = document.getElementById('newEstimateProductQuantity');
+            if (newProductQuantityInput) {
+              newProductQuantityInput.addEventListener('change', updateNewEstimateProductTotal);
+            }
+          }, 100);
+          
+          // Add save button if it doesn't exist
+          const modalContent = document.querySelector('.order-edit-section');
+          const existingSaveButton = document.getElementById('save-estimate-changes-btn');
+          
+          if (!existingSaveButton) {
+            const saveButtonContainer = document.createElement('div');
+            saveButtonContainer.style.textAlign = 'right';
+            saveButtonContainer.style.marginTop = '20px';
+            saveButtonContainer.innerHTML = `
+              <button id="save-estimate-changes-btn" class="btn btn-primary" onclick="saveEstimateChanges()">Save Changes</button>
+            `;
+            modalContent.appendChild(saveButtonContainer);
+          }
+        }
+      }
+    }
+
+    // Function to update estimate product code
+    function updateEstimateProductCode(srNumber, value) {
+      if (selectedEstimateIndex !== null) {
+        const estimate = estimates[selectedEstimateIndex];
+        const item = estimate.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          const product = products.find(p => p.code === value);
+          if (product) {
+            item.productCode = value;
+            item.name = product.name;
+            item.category = product.category;
+            item.size = product.size;
+            item.rate = product.price;
+            item.total = item.quantity * item.rate;
+            
+            // Save to localStorage
+            localStorage.setItem('estimates', JSON.stringify(estimates));
+            
+            showEstimateDetail(true);
+          }
+        }
+      }
+    }
+
+    // Function to update estimate quantity
+    function updateEstimateQuantity(srNumber, value) {
+      if (selectedEstimateIndex !== null) {
+        const estimate = estimates[selectedEstimateIndex];
+        const item = estimate.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          const newQuantity = parseInt(value) || 0;
+          
+          // If quantity is set to 0, remove the item from the estimate
+          if (newQuantity === 0) {
+            // Remove the item from the estimate
+            estimate.items = estimate.items.filter(i => i.srNumber !== srNumber);
+            
+            // Re-number the remaining items
+            estimate.items.forEach((item, idx) => {
+              item.srNumber = idx + 1;
+            });
+            
+            // Update total items count
+            estimate.totalItems = estimate.items.length;
+          } else {
+            // Just update the quantity
+            item.quantity = newQuantity;
+            item.total = item.quantity * item.rate;
+          }
+          
+          // Recalculate total amount
+          estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+          
+          // Save to localStorage
+          localStorage.setItem('estimates', JSON.stringify(estimates));
+          
+          showEstimateDetail(true);
+        }
+      }
+    }
+
+    // Function to update estimate rate
+    function updateEstimateRate(srNumber, value) {
+      if (selectedEstimateIndex !== null) {
+        const estimate = estimates[selectedEstimateIndex];
+        const item = estimate.items.find(i => i.srNumber === srNumber);
+        if (item) {
+          item.rate = parseFloat(value) || 0;
+          item.total = item.quantity * item.rate;
+          estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+          
+          // Save to localStorage
+          localStorage.setItem('estimates', JSON.stringify(estimates));
+          
+          showEstimateDetail(true);
+        }
+      }
+    }
+
+    // Function to close order detail modal
+    function closeOrderDetail() {
+      document.getElementById('order-detail-section').classList.add('hidden');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+
+    // Function to close estimate detail modal
+    function closeEstimateDetail() {
+      document.getElementById('estimate-detail-section').classList.add('hidden');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+      
+      // Refresh the estimates table to show any status changes
+      renderEstimatesTable();
+    }
+
+    // Show orders section by default
+    showOrders();
+
+    // Set today's date as default in the date input
+    document.getElementById('orderDate').valueAsDate = new Date();
+
+    /**
+     * Generates a unique order ID
+     * @returns {string} A unique order ID
+     */
+    function generateOrderId() {
+      const prefix = 'ORD';
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `${prefix}-${timestamp}-${random}`;
+    }
+
+    /**
+     * Generates a unique estimate ID
+     * @returns {string} A unique estimate ID
+     */
+    function generateEstimateId() {
+      const prefix = 'EST';
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `${prefix}-${timestamp}-${random}`;
+    }
+
+    // Function to broadcast estimate updates to other pages
+    function broadcastEstimateUpdate(action, estimate) {
+      // Create a custom event that can be listened to by other pages
+      const event = new CustomEvent('estimate-update', {
+        detail: { action, estimate }
+      });
+      
+      // Dispatch the event to window for local updates
+      window.dispatchEvent(event);
+      
+      // Also store latest version in localStorage for cross-page updates
+      const timestamp = new Date().getTime();
+      localStorage.setItem('estimate-update-timestamp', timestamp.toString());
+      localStorage.setItem('estimate-update-action', action);
+      localStorage.setItem('estimate-update-data', JSON.stringify(estimate));
+    }
+
+    // Function to update estimate status from detail view
+    async function updateEstimateStatusFromDetail() {
+      if (selectedEstimateIndex === null) return;
+      
+      try {
+        const newStatus = document.getElementById('estimate-detail-status').value;
+        const estimate = estimates[selectedEstimateIndex];
+        
+        // Convert 'completed' to 'packed' for backend compatibility if needed
+        const statusToSave = newStatus === 'completed' ? 'packed' : newStatus;
+        
+        // Use API to update status
+        await window.api.updateEstimateStatus(estimate.id, statusToSave);
+        
+        // Update local estimate data
+        estimate.status = statusToSave;
+        
+        // Update localStorage to ensure persistence
+        localStorage.setItem('estimates', JSON.stringify(estimates));
+        
+        // Update the UI to reflect the change immediately
+        const statusText = newStatus === 'completed' ? 'Completed' : 'Pending';
+        const statusClass = statusText === 'Completed' ? 'status-badge-success' : 'status-badge-danger';
+        
+        // Broadcast the estimate update to other pages
+        broadcastEstimateUpdate('update', estimate);
+        
+        // Show success message
+        alert('Estimate status updated successfully');
+        
+        // Refresh the estimates table
+        renderEstimatesTable();
+      } catch (error) {
+        console.error('Error updating estimate status:', error);
+        alert('Failed to update estimate status. Please try again.');
+      }
+    }
+
+    // Variable to store the currently selected estimate for printing
+    let selectedEstimateForPrint = null;
+
+    // Function to show print options modal
+    function showPrintOptions(index) {
+      selectedEstimateForPrint = index;
+      document.getElementById('print-options-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+      
+      // Add testing flag for dummy data if needed
+      window.useDummyDataForPrint = false;
+    }
+    
+    // Function to enable dummy data for testing
+    function enableDummyDataForPrint() {
+      window.useDummyDataForPrint = true;
+      alert('Dummy data mode enabled for testing. The next print will use 40 items.');
+    }
+
+    // Function to close print options modal
+    function closePrintOptionsModal() {
+      document.getElementById('print-options-modal').classList.add('hidden');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+
+    // Function for better controlled printing
+    function doPrint() {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        alert("Please allow pop-ups for printing to work correctly");
+        return;
+      }
+      
+      let contentToPrint = '';
+      let title = '';
+      
+      // Get the content based on which modal is active
+      if (!document.getElementById('estimate-print-preview').classList.contains('hidden')) {
+        contentToPrint = document.getElementById('estimate-print-content').innerHTML;
+        title = 'Estimate Print';
+      } else if (!document.getElementById('label-print-preview').classList.contains('hidden')) {
+        contentToPrint = document.getElementById('label-print-content').innerHTML;
+        title = 'Label Print';
+      }
+      
+      // Write the content to the new window
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${title}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+          <style>
+            @page {
+              size: A4;
+              margin: 0.5cm;
+              width: 21cm;
+              height: 29.7cm;
+            }
+            
+            html, body {
+              width: 100%;
+              height: 100%;
+              margin: 0;
+              padding: 0;
+              font-family: 'Open Sans', sans-serif;
+              font-size: 14px;
+              background-color: white;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            /* Handle page breaks properly */
+            .estimate-page, .label-page {
+              page-break-after: always;
+              width: 21cm;
+              min-height: 29.7cm;
+              box-sizing: border-box;
+              overflow: hidden;
+              position: relative;
+              margin: 0 auto;
+            }
+            
+            /* Remove page break from last page */
+            .estimate-page:last-child, .label-page:last-child {
+              page-break-after: auto;
+            }
+            
+            /* Scale content to fit page */
+            .content-wrapper {
+              width: 100%;
+              margin: 0 auto;
+              box-sizing: border-box;
+              overflow: visible;
+              position: relative;
+            }
+            
+            /* Ensure table borders print correctly */
+            table, th, td {
+              border-collapse: collapse;
+            }
+            
+            /* Estimate print styles */
+            .estimate-container, .estimate-page {
+              width: 100%;
+              min-height: calc(100% - 2cm);
+              padding: 1cm;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            /* Label grid styles */
+            .label-grid {
+              display: grid;
+              width: calc(100% - 1cm);
+              height: calc(100% - 0.5cm);
+              margin: 0;
+              margin-left: 0.5cm;
+              margin-right: 0.5cm;
+              margin-bottom: 0.5cm;
+              grid-template-columns: repeat(4, 1fr);
+              grid-template-rows: repeat(10, 1fr);
+              gap: 0;
+              font-family: 'Open Sans', sans-serif;
+              font-size: 14px;
+              line-height: 1.2;
+              box-sizing: border-box;
+              border-collapse: collapse;
+            }
+            
+            .label-grid > div {
+              padding: 6px 5px;
+              font-size: 11px;
+            }
+            
+            .label-grid > div > div {
+              line-height: 1.2;
+            }
+
+            @media print {
+              body {
+                width: 210mm;
+                height: 297mm;
+              }
+              .estimate-page, .label-page {
+                width: 210mm;
+                min-height: 297mm;
+                page-break-after: always;
+              }
+              .estimate-page:last-of-type, .label-page:last-of-type {
+                page-break-after: auto;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="content-wrapper">
+            ${contentToPrint}
+          </div>
+        </body>
+        </html>
+      `);
+      
+      // Give time for the content to render
+      setTimeout(() => {
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        // Close the window after printing (or if print is cancelled)
+        printWindow.onafterprint = function() {
+          printWindow.close();
+        };
+        // Fallback for browsers that don't support onafterprint
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            printWindow.close();
+          }
+        }, 10000); // Close after 10 seconds if not closed already
+      }, 500);
+    }
+
+    // Function to print label - updating this to handle pagination and ensure 9x4 layout
+    function printLabel() {
+      if (selectedEstimateForPrint === null && !window.useDummyDataForPrint) return;
+      
+      // Use the selected estimate or generate dummy data for testing
+      let estimate;
+      
+      if (window.useDummyDataForPrint) {
+        // Use dummy data for testing
+        estimate = generateDummyDataForPrint();
+        window.useDummyDataForPrint = false; // Reset the flag after use
+      } else {
+        estimate = estimates[selectedEstimateForPrint];
+      }
+      
+      const labelContent = document.getElementById('label-print-content');
+      
+      // Format today's date in DD/MM/YYYY format
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      // Fetch customer address information if available
+      let customerAddress = '';
+      let customerName = estimate.customerName || '';
+      let customerRefId = '';
+      
+      // Try to get customer details if we have a customer API available
+      if (window.api && window.api.getCustomers) {
+        try {
+          // Async operation inside sync function - using promise pattern
+          const fetchCustomerDetails = async () => {
+            const customers = await window.api.getCustomers();
+            // Find customer by name match
+            const customer = customers.find(c => c.name === customerName);
+            if (customer) {
+              if (customer.address) {
+                customerAddress = customer.address;
+              }
+              if (customer.customer_ref_id) {
+                customerRefId = customer.customer_ref_id;
+              }
+              finishLabelPrinting();
+            } else {
+              finishLabelPrinting();
+            }
+          };
+          
+          // Start fetch but continue with label creation
+          fetchCustomerDetails().catch(err => {
+            console.error('Error fetching customer details:', err);
+            finishLabelPrinting();
+          });
+        } catch (error) {
+          console.error('Error accessing customer API:', error);
+          finishLabelPrinting();
+        }
+      } else {
+        finishLabelPrinting();
+      }
+      
+      function finishLabelPrinting() {
+        // Calculate how many pages we need (40 labels per page in a 10x4 grid)
+        const LABELS_PER_PAGE = 40;
+        const totalPages = Math.ceil(estimate.items.length / LABELS_PER_PAGE);
+        let pagesHTML = '';
+        
+        // Generate HTML for each page
+        for (let page = 0; page < totalPages; page++) {
+          const startIdx = page * LABELS_PER_PAGE;
+          const endIdx = Math.min(startIdx + LABELS_PER_PAGE, estimate.items.length);
+          const pageItems = estimate.items.slice(startIdx, endIdx);
+          
+          // Create grid layout container for this page
+          pagesHTML += `
+            <div class="label-page" style="page-break-after: always; margin-bottom: ${page < totalPages - 1 ? '20px' : '0'};">
+              <div class="label-grid" style="display: grid; width: calc(100% - 1cm); height: calc(100% - 0.5cm); margin: 0; margin-left: 0.5cm; margin-right: 0.5cm; margin-bottom: 0.5cm; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(10, 1fr); gap: 0; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.2; box-sizing: border-box; border-collapse: collapse;">
+          `;
+          
+          // Generate labels for each item in the page
+          for (let i = 0; i < LABELS_PER_PAGE; i++) {
+            const itemIndex = i < pageItems.length ? startIdx + i : null;
+            const item = itemIndex !== null ? estimate.items[itemIndex] : null;
+            
+            if (item) {
+              // Format the price to show two decimal places
+              const formattedPrice = item.rate.toFixed(2);
+              
+              // Use the product code as D.No
+              const productCode = item.productCode;
+              
+              // Use sequential numbering
+              const serialNumber = itemIndex + 1;
+              
+              pagesHTML += `
+                <div style="padding: 6px 5px;">
+                  <div style="font-size: 11px; letter-spacing: -0.2px;">
+                    <div style="margin-bottom: 2px;"><strong>Sr.No: </strong>${serialNumber}</div>
+                    <div style="margin-bottom: 2px;"><strong>Rs. : </strong>${formattedPrice}</div>
+                    <div style="margin-bottom: 2px;"><strong>Prod.: </strong>${item.name.length > 15 ? item.name.substring(0, 15) : item.name}</div>
+                    <div style="margin-bottom: 2px;"><strong>D.No: </strong>${productCode}</div>
+                    <div style="margin-bottom: 2px;"><strong>Qty : </strong>${item.quantity}</div>
+                    <div style="margin-bottom: 2px;"><strong>Cust.ID: </strong>${customerRefId || customerName}</div>
+                  </div>
+                </div>
+              `;
+            } else {
+              // Empty cell to maintain grid structure
+              pagesHTML += `
+                <div style="padding: 6px 5px;">
+                  <!-- Empty label cell -->
+                </div>
+              `;
+            }
+          }
+          
+          // Close the grid container for this page
+          pagesHTML += `
+              </div>
+            </div>
+          `;
+        }
+        
+        // Set the content with all pages
+        labelContent.innerHTML = pagesHTML;
+        
+        // Hide print options modal
+        closePrintOptionsModal();
+        
+        // Show label print preview modal
+        document.getElementById('label-print-preview').classList.remove('hidden');
+      }
+    }
+
+    // Function to close label print preview
+    function closeLabelPrintPreview() {
+      document.getElementById('label-print-preview').classList.add('hidden');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+    
+    // Function to view estimate by ID 
+    function viewEstimateByID(estimateID) {
+      // First ensure estimates are loaded
+      if (estimates.length === 0) {
+        loadEstimates().then(() => {
+          findAndViewEstimate(estimateID);
+        });
+      } else {
+        findAndViewEstimate(estimateID);
+      }
+    }
+    
+    // Helper function to find estimate by ID and view it
+    function findAndViewEstimate(estimateID) {
+      // Find the index of the estimate with the given ID
+      const index = estimates.findIndex(est => est.id === estimateID);
+      
+      if (index !== -1) {
+        // Switch to estimates section
+        showEstimates();
+        
+        // View the estimate
+        viewEstimate(index);
+      } else {
+        alert('Estimate not found. Please refresh the page and try again.');
+      }
+    }
+    
+    // Function to close estimate print preview
+    function closeEstimatePrintPreview() {
+      document.getElementById('estimate-print-preview').classList.add('hidden');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+
+    // Add this new function to generate dummy data for testing print functionality
+    function generateDummyDataForPrint() {
+      // Create a dummy estimate with 40 items for testing pagination
+      const dummyItems = [];
+      for (let i = 1; i <= 40; i++) {
+        dummyItems.push({
+          srNumber: i,
+          productCode: `P${i.toString().padStart(3, '0')}`,
+          name: `Product ${i}`,
+          category: i % 3 === 0 ? 'Electronics' : (i % 3 === 1 ? 'Clothing' : 'Home'),
+          size: i % 4 === 0 ? 'L' : (i % 4 === 1 ? 'M' : (i % 4 === 2 ? 'S' : 'XL')),
+          quantity: Math.floor(Math.random() * 10) + 1,
+          rate: Math.floor(Math.random() * 1000) + 100,
+          total: 0
+        });
+      }
+      
+      // Calculate totals
+      dummyItems.forEach(item => {
+        item.total = item.quantity * item.rate;
+      });
+      
+      const totalAmount = dummyItems.reduce((sum, item) => sum + item.total, 0);
+      
+      // Create the dummy estimate
+      const dummyEstimate = {
+        id: 'EST-DUMMY-001',
+        orderId: 'ORD-DUMMY-001',
+        date: new Date().toISOString().split('T')[0],
+        customerName: 'Dummy Customer',
+        agentName: 'Test Agent',
+        totalItems: dummyItems.length,
+        totalAmount: totalAmount,
+        status: 'Pending',
+        items: dummyItems
+      };
+      
+      return dummyEstimate;
+    }
+
+    // Function to print estimate - updating this to handle pagination
+    function printEstimate() {
+      if (selectedEstimateForPrint === null && !window.useDummyDataForPrint) return;
+      
+      // Use the selected estimate or generate dummy data for testing
+      let estimate;
+      
+      if (window.useDummyDataForPrint) {
+        // Use dummy data for testing
+        estimate = generateDummyDataForPrint();
+        window.useDummyDataForPrint = false; // Reset the flag after use
+      } else {
+        estimate = estimates[selectedEstimateForPrint];
+      }
+      
+      const printContent = document.getElementById('estimate-print-content');
+      
+      // Format the date as DD/MM/YYYY
+      const dateObj = new Date(estimate.date);
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      // Get customer address and ID (will be blank if not available)
+      let customerAddress = '';
+      let customerRefId = '';
+      
+      // Try to get customer details if we have a customer API available
+      if (window.api && window.api.getCustomers) {
+        try {
+          // Since we're in an async function, we can use await directly
+          window.api.getCustomers().then(customers => {
+            // Find customer by name match
+            const customer = customers.find(c => c.name === estimate.customerName);
+            if (customer) {
+              if (customer.address) {
+                customerAddress = customer.address;
+              }
+              if (customer.customer_ref_id) {
+                customerRefId = customer.customer_ref_id;
+              }
+              generateEstimateHTML();
+            } else {
+              generateEstimateHTML();
+            }
+          }).catch(err => {
+            console.error('Error fetching customer details:', err);
+            generateEstimateHTML();
+          });
+        } catch (error) {
+          console.error('Error accessing customer API:', error);
+          generateEstimateHTML();
+        }
+      } else {
+        generateEstimateHTML();
+      }
+      
+      function generateEstimateHTML() {
+        // Calculate how many pages we need (36 items per page)
+        const ITEMS_PER_PAGE = 36;
+        const totalPages = Math.ceil(estimate.items.length / ITEMS_PER_PAGE);
+        let pagesHTML = '';
+        
+        // Generate HTML for each page
+        for (let page = 0; page < totalPages; page++) {
+          const startIdx = page * ITEMS_PER_PAGE;
+          const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, estimate.items.length);
+          const pageItems = estimate.items.slice(startIdx, endIdx);
+          
+          // Calculate page total
+          const pageTotal = pageItems.reduce((sum, item) => sum + item.total, 0);
+          
+          pagesHTML += `
+            <div class="estimate-page" style="page-break-after: always; margin-bottom: ${page < totalPages - 1 ? '20px' : '0'}; font-family: 'Open Sans', sans-serif; width: 100%; max-height: 100%; display: flex; flex-direction: column; box-sizing: border-box; font-size: 14px; padding: 0.5cm; padding-bottom: 1cm; overflow: visible;">
+              <div class="estimate-header">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 0.2cm;">
+                  <tr>
+                    <td style="width: 50%; vertical-align: top; padding-bottom: 3px;">
+                      <div style="font-weight: bold; font-size: 14px;">Estimate No. &nbsp;&nbsp; ${estimate.id.replace('EST-', '')}</div>
+                      <div style="font-weight: bold; margin-top: 5px; font-size: 14px;">PARTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${estimate.customerName}</div>
+                      <div style="margin-top: 5px; font-size: 14px;">CUST ID &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${customerRefId || ''}</div>
+                      <div style="margin-top: 5px; font-size: 14px;">ADDRESS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${customerAddress || ''}</div>
+                      <div style="margin-top: 5px; font-size: 14px;">TRANSPORTER</div>
+                    </td>
+                    <td style="width: 50%; text-align: right; vertical-align: top; padding-bottom: 3px;">
+                      <div style="font-weight: bold; font-size: 14px;">DATE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${formattedDate}</div>
+                      ${totalPages > 1 ? `<div style="font-weight: bold; font-size: 14px; margin-top: 5px;">PAGE &nbsp;&nbsp;&nbsp;&nbsp; ${page + 1} of ${totalPages}</div>` : ''}
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <div class="estimate-table-container" style="flex: 1; display: flex; flex-direction: column;">
+                <table class="estimate-table" style="width: 100%; border-collapse: collapse; border: 1px solid #000; background-color: #f5f5f5; table-layout: fixed; flex: 1; font-family: 'Open Sans', sans-serif;">
+                  <thead>
+                    <tr style="background-color: #e0e0e0;">
+                      <th style="width: 5%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Sr</th>
+                      <th style="width: 30%; border: 1px solid #000; padding: 2px; text-align: left; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Particular</th>
+                      <th style="width: 10%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Dest. No.</th>
+                      <th style="width: 10%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Class</th>
+                      <th style="width: 8%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Size</th>
+                      <th style="width: 7%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Qty</th>
+                      <th style="width: 15%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Rate</th>
+                      <th style="width: 15%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden;">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${pageItems.map((item, index) => {
+                      const amount = (item.quantity * item.rate).toFixed(2);
+                      const rowBackground = index % 2 === 0 ? '#f8f8f8' : '#ececec';
+                      // Use the actual item number from the full list, not just the page index
+                      const actualIndex = startIdx + index;
+                      return `
+                        <tr style="background-color: ${rowBackground};">
+                          <td style="width: 5%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; white-space: nowrap; overflow: hidden;">${actualIndex + 1}</td>
+                          <td style="width: 30%; border: 1px solid #000; padding: 2px; text-align: left; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name.toUpperCase()}</td>
+                          <td style="width: 10%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; white-space: nowrap; overflow: hidden;">${item.productCode}</td>
+                          <td style="width: 10%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; white-space: nowrap; overflow: hidden;">${item.category || 'SACK'}</td>
+                          <td style="width: 8%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; white-space: nowrap; overflow: hidden;">${item.size || '-'}</td>
+                          <td style="width: 7%; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; white-space: nowrap; overflow: hidden;">${item.quantity}</td>
+                          <td style="width: 15%; border: 1px solid #000; padding: 2px; text-align: right; font-size: 12px; white-space: nowrap; overflow: hidden;">${item.rate.toFixed(2)}</td>
+                          <td style="width: 15%; border: 1px solid #000; padding: 2px; text-align: right; font-size: 12px; white-space: nowrap; overflow: hidden;">${amount}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                    
+                    <tr style="height: ${(() => {
+                      // Calculate the height to fill the remaining space
+                      const rowHeightPx = 25; // Approximate height of each row
+                      const currentRows = pageItems.length;
+                      const maxRows = 25; // Reduced row count to ensure space at bottom
+                      const rowsToFill = Math.max(0, maxRows - currentRows); // Ensure we don't go negative
+                      return (rowsToFill * rowHeightPx) + 'px';
+                    })()}">
+                      <td colspan="8" style="border: 1px solid #000; font-family: 'Open Sans', sans-serif;"></td>
+                    </tr>
+                    
+                    <tr style="background-color: #e0e0e0;">
+                      <td colspan="6" style="border: 1px solid #000; text-align: right; padding: 2px; font-size: 12px; font-family: 'Open Sans', sans-serif;">
+                        <div style="display: flex; justify-content: space-between;">
+                          <div>Packages&nbsp;&nbsp;&nbsp;0</div>
+                          <div></div>
+                        </div>
+                      </td>
+                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">P & F. Charges</td>
+                      <td style="text-align: right; padding: 2px; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">0.00</td>
+                    </tr>
+                    <tr style="background-color: #e0e0e0;">
+                      <td colspan="6" style="border: 1px solid #000; font-family: 'Open Sans', sans-serif;"></td>
+                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${page === totalPages - 1 ? 'TOTAL Amount' : 'Page Total'}</td>
+                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${page === totalPages - 1 ? estimate.totalAmount.toFixed(2) : pageTotal.toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <!-- Add extra space at the bottom to ensure content doesn't get cut off -->
+                <div style="height: 2cm;"></div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Set the content with all pages
+        printContent.innerHTML = pagesHTML;
+        
+        // Hide print options modal
+        closePrintOptionsModal();
+        
+        // Show estimate print preview modal
+        document.getElementById('estimate-print-preview').classList.remove('hidden');
+      }
+    }
+
+    // Function to update estimate detail headers based on edit mode
+    function updateEstimateDetailHeaders(editable) {
+      // Removed functionality as we no longer need to add/remove the Actions column
+      // The table structure remains the same in both view and edit modes
+    }
+
+    // Function to remove an item from estimate
+    function removeEstimateItem(srNumber) {
+      if (selectedEstimateIndex === null) return;
+      
+      const estimate = estimates[selectedEstimateIndex];
+      
+      // Remove the item
+      estimate.items = estimate.items.filter(item => item.srNumber !== srNumber);
+      
+      // Re-number the remaining items
+      estimate.items.forEach((item, index) => {
+        item.srNumber = index + 1;
+      });
+      
+      // Update totals
+      estimate.totalItems = estimate.items.length;
+      estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+      
+      // Save to localStorage
+      localStorage.setItem('estimates', JSON.stringify(estimates));
+      
+      // Refresh the detail view
+      showEstimateDetail(true);
+    }
+    
+    // Function to update new estimate product info when code is entered
+    function updateNewEstimateProductInfo() {
+      const productCode = this.value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        document.getElementById('newEstimateProductName').textContent = product.name;
+        document.getElementById('newEstimateProductCategory').textContent = product.category || '-';
+        document.getElementById('newEstimateProductSize').textContent = product.size || '-';
+        document.getElementById('newEstimateProductRate').textContent = '₹' + product.price;
+        
+        // Update quantity input with max available stock
+        const stock = productInventory[productCode]?.stock || 0;
+        let availabilityClass = 'high';
+        let availabilityText = 'In Stock';
+        
+        if (stock === 0) {
+          availabilityClass = 'low';
+          availabilityText = 'Out of Stock';
+        } else if (stock < 10) {
+          availabilityClass = 'low';
+          availabilityText = 'Low Stock';
+        } else if (stock < 50) {
+          availabilityClass = 'medium';
+          availabilityText = 'Medium Stock';
+        }
+        
+        document.getElementById('newEstimateProductAvailability').innerHTML = 
+          `<span class="stock-level ${availabilityClass}">${availabilityText}: ${stock}</span>`;
+          
+        // Update total
+        updateNewEstimateProductTotal();
+      } else {
+        document.getElementById('newEstimateProductName').textContent = '-';
+        document.getElementById('newEstimateProductCategory').textContent = '-';
+        document.getElementById('newEstimateProductSize').textContent = '-';
+        document.getElementById('newEstimateProductRate').textContent = '-';
+        document.getElementById('newEstimateProductAvailability').textContent = '-';
+        document.getElementById('newEstimateProductTotal').textContent = '₹0';
+      }
+    }
+
+    // Function to update total when quantity is changed
+    function updateNewEstimateProductTotal() {
+      const quantity = parseInt(document.getElementById('newEstimateProductQuantity').value) || 0;
+      const productCode = document.getElementById('newEstimateProductCode').value;
+      const product = products.find(p => p.code === productCode);
+      
+      if (product) {
+        const total = product.price * quantity;
+        document.getElementById('newEstimateProductTotal').textContent = '₹' + total;
+      }
+    }
+
+    // Function to add a new product to estimate
+    function addNewProductToEstimate() {
+      if (selectedEstimateIndex === null) return;
+      
+      const productCode = document.getElementById('newEstimateProductCode').value;
+      const quantity = parseInt(document.getElementById('newEstimateProductQuantity').value) || 0;
+      
+      if (!productCode) {
+        alert('Please enter a product code');
+        return;
+      }
+      
+      const product = products.find(p => p.code === productCode);
+      if (!product) {
+        alert('Product not found. Please check the product code.');
+        return;
+      }
+      
+      if (quantity <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+      }
+      
+      const total = product.price * quantity;
+      const estimate = estimates[selectedEstimateIndex];
+      
+      // Check if the product is already in the estimate
+      const existingItemIndex = estimate.items.findIndex(item => item.productCode === productCode);
+      
+      if (existingItemIndex !== -1) {
+        alert('This product is already in the estimate. Please update the quantity instead.');
+        return;
+      }
+      
+      // Add new item to estimate
+      const newItem = {
+        srNumber: estimate.items.length + 1,
+        productCode: product.code,
+        name: product.name,
+        category: product.category || '-',
+        size: product.size || '-',
+        quantity: quantity,
+        rate: product.price,
+        total: total
+      };
+      
+      estimate.items.push(newItem);
+      
+      // Update total amount
+      estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+      estimate.totalItems = estimate.items.length;
+      
+      // Update localStorage
+      localStorage.setItem('estimates', JSON.stringify(estimates));
+      
+      // Broadcast the estimate update
+      broadcastEstimateUpdate('update', estimate);
+      
+      // Refresh the estimate detail view
+      showEstimateDetail(true);
+    }
+    
+    // Function to save estimate changes
+    function saveEstimateChanges() {
+      if (selectedEstimateIndex === null) return;
+      
+      try {
+        // Show loading indicator or disable the save button
+        const saveButton = document.getElementById('save-estimate-changes-btn');
+        if (saveButton) {
+          saveButton.textContent = "Saving...";
+          saveButton.disabled = true;
+        }
+        
+        const estimate = estimates[selectedEstimateIndex];
+        
+        // Save to localStorage
+        localStorage.setItem('estimates', JSON.stringify(estimates));
+        
+        // Broadcast the estimate update
+        broadcastEstimateUpdate('update', estimate);
+        
+        // Update UI
+        renderEstimatesTable();
+        
+        // Close detail view
+        closeEstimateDetail();
+        
+        // Reset save button
+        if (saveButton) {
+          saveButton.textContent = "Save Changes";
+          saveButton.disabled = false;
+        }
+        
+        alert('Estimate updated successfully');
+      } catch (error) {
+        console.error('Error updating estimate:', error);
+        
+        // Reset save button if it exists
+        const saveButton = document.getElementById('save-estimate-changes-btn');
+        if (saveButton) {
+          saveButton.textContent = "Save Changes";
+          saveButton.disabled = false;
+        }
+        
+        alert('Failed to update estimate. Please try again.');
+      }
+    }
+
+    // Function to search orders
+    function searchOrders() {
+      const searchTerm = document.getElementById('order-search').value.toLowerCase();
+      const rows = document.getElementById('orders-table-body').getElementsByTagName('tr');
+      
+      for (let i = 0; i < rows.length; i++) {
+        const orderId = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+        const customerName = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+        
+        if (orderId.includes(searchTerm) || customerName.includes(searchTerm)) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    }
+
+    // Function to clear order search
+    function clearOrderSearch() {
+      document.getElementById('order-search').value = '';
+      searchOrders();
+    }
+
+    // Function to search estimates
+    function searchEstimates() {
+      const searchTerm = document.getElementById('estimate-search').value.toLowerCase();
+      const rows = document.getElementById('estimates-table-body').getElementsByTagName('tr');
+      
+      for (let i = 0; i < rows.length; i++) {
+        const estimateId = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+        const customerName = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+        
+        if (estimateId.includes(searchTerm) || customerName.includes(searchTerm)) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    }
+
+    // Function to clear estimate search
+    function clearEstimateSearch() {
+      document.getElementById('estimate-search').value = '';
+      searchEstimates();
+    }
+  </script>
+</body>
+</html> 

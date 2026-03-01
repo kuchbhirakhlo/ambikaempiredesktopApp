@@ -1,0 +1,33 @@
+{
+  "name": "vendor-management-app",
+  "version": "1.0.0",
+  "description": "Vendor Management Desktop Application",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "nodemon --watch src --watch server.js --exec \"electron .\"",
+    "server": "nodemon server.js",
+    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
+    "electron": "electron .",
+    "package-win": "electron-packager . \"Vendor Management App\" --overwrite --asar --platform=win32 --arch=x64 --icon=src/assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=VendorManagement --version-string.FileDescription=VendorManagement --version-string.ProductName=\"Vendor Management App\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.9.1",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "electron-store": "^8.2.0",
+    "express": "^4.21.2",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.13.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^28.1.0",
+    "electron-packager": "^17.1.2",
+    "electron-rebuild": "^3.2.9",
+    "nodemon": "^3.1.9"
+  }
+}

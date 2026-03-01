@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Management - Reports</title>
+  <link rel="stylesheet" href="../components/Navbar.css">
+  <style> 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px; 
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+    .report-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      transition: transform 0.2s;
+    }
+    .report-card:hover {
+      transform: translateY(-5px);
+    }
+    .report-card a {
+      text-decoration: none;
+      color: inherit;
+    }
+    .report-card h3 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+    .report-card p {
+      color: #666;
+      margin: 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar container -->
+    <div id="navbar-container"></div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="container">
+        <header>
+          <h1>Reports</h1>
+        </header>
+        
+        <div class="reports-grid">
+          <div class="report-card">
+            <a href="reports/customer-pending-orders.html">
+              <h3>Pending Orders</h3>
+              <p>View and manage pending orders for each customer</p>
+            </a>
+          </div>
+          
+          <div class="report-card">
+            <a href="reports/agent-estimates.html">
+              <h3>Agent Wise Estimates</h3>
+              <p>Track estimates created by sales agents</p>
+            </a>
+          </div>
+          
+          <div class="report-card">
+            <a href="reports/customer-estimates.html">
+              <h3>Order Comparison Chart</h3>
+              <p>View estimates by customer</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/Navbar.js"></script>
+  <script>
+    // Check if user is logged in
+    const userString = sessionStorage.getItem('user');
+    if (!userString) {
+      window.location.href = 'login.html';
+    }
+
+    // Add submenu toggle functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const reportsMenu = document.querySelector('.has-submenu');
+      if (reportsMenu) {
+        reportsMenu.classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html> 

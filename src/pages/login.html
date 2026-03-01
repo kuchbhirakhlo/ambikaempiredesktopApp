@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient( #4a6cf7, #3b3be5,rgba(255, 255, 255, 0.2));
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 420px;
+      padding: 50px 40px;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logohome {
+      width: 150px;
+      margin-bottom: 10px;
+      background-color: #6c757d;
+      border-radius: 50px;
+    }
+
+    .logo p {
+      font-size: 16px;
+      color: #6c757d;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: 0.2s ease-in-out;
+      background-color: #f8f9fa;
+    }
+
+    .form-group input:focus {
+      border-color: #4a6cf7;
+      outline: none;
+      background-color: #fff;
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 14px;
+      background: #4a6cf7;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease-in-out;
+    }
+
+    .login-button:hover {
+      background-color: #3a5de4;
+    }
+
+    .error-message {
+      margin-top: 20px;
+      color: #e74c3c;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    .demo-accounts {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #6c757d;
+      background-color: #f1f3f5;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .demo-accounts h4 {
+      margin: 0 0 10px;
+      color: #2c3e50;
+    }
+
+    .demo-accounts p {
+      margin: 5px 0;
+    }
+
+    .demo-accounts strong {
+      color: #2c3e50;
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <img src="../public/logo.png" alt="logo" class="logohome" />
+      <p>Login to your account</p>
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter your username" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required />
+      </div>
+
+      <button type="submit" class="login-button">Login</button>
+      <div id="error-message" class="error-message"></div>
+    </form>
+  </div>
+
+  <script src="../utils/error-recovery.js"></script>
+  <script>
+    // Function to show error messages
+    function showError(message) {
+      const errorMessage = document.getElementById('error-message');
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
+
+    // Initialize default admin user if no users exist
+    (function initAdminUser() {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        
+        // Check if users exist
+        if (users.length === 0) {
+          console.log('No users found. Creating default admin user...');
+          
+          // Create default admin user
+          const adminUser = {
+            id: 1,
+            name: 'Admin User',
+            username: 'admin',
+            password: 'admin123',
+            email: 'admin@example.com',
+            role: 'admin',
+            status: 'active'
+          };
+          
+          // Save to localStorage
+          localStorage.setItem('users', JSON.stringify([adminUser]));
+          console.log('Default admin user created successfully.');
+        }
+      } catch (error) {
+        console.error('Error initializing admin user:', error);
+        // Recover form inputs if there was an error
+        recoverFormInputs();
+      }
+    })();
+
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        let isValid = false;
+        let userData = null;
+        let errorMessage = null;
+        
+        // Check if we can use the API (electron mode) or localStorage (browser mode)
+        if (window.api && window.api.login) {
+          // Electron mode with API
+          const result = await window.api.login({ username, password });
+          
+          if (result.success) {
+            isValid = true;
+            userData = result.user;
+          } else {
+            errorMessage = result.message;
+          }
+        } else {
+          // Browser mode with localStorage
+          const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+          for (const user of users) {
+            if (user.username === username && user.password === password) {
+              if (user.status === 'blocked') {
+                errorMessage = 'Your account has been blocked. Please contact the administrator.';
+                break;
+              }
+              
+              isValid = true;
+              userData = { ...user };
+              delete userData.password;
+              break;
+            }
+          }
+          
+          if (!isValid && !errorMessage) {
+            errorMessage = 'Invalid username or password';
+          }
+        }
+
+        if (isValid && userData) {
+          // Store user data in session
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          window.location.href = 'dashboard.html';
+        } else {
+          showError(errorMessage || 'Invalid username or password');
+          // Ensure form remains responsive
+          recoverFormInputs();
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showError('An error occurred during login. Please try again.');
+        // Ensure form remains responsive after error
+        recoverFormInputs();
+      }
+    });
+  </script>
+</body>
+</html>
