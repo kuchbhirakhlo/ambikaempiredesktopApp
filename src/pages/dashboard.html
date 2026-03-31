@@ -473,6 +473,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script>
+    // Get selected year from login
+    const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
+
+    // Helper function to filter data by year
+    function filterByYear(items) {
+      if (!items || !Array.isArray(items)) return [];
+      return items.filter(item => {
+        if (item.year) return item.year === selectedYear;
+        if (item.date) return new Date(item.date).getFullYear() === selectedYear;
+        if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
+        return true; // Include items without date info
+      });
+    }
+
     // Browser compatibility layer code - add this at the beginning
     if (!window.api) {
       console.log('Running in browser mode - using localStorage API fallback');
@@ -481,13 +495,24 @@
           return JSON.parse(localStorage.getItem('products') || '[]');
         },
         getInventory: async () => {
-          return JSON.parse(localStorage.getItem('inventory') || '[]');
+          const items = JSON.parse(localStorage.getItem('inventory') || '[]');
+          return filterByYear(items);
         },
-        getSalesOrders: async () => {
-          return JSON.parse(localStorage.getItem('orders') || '[]');
+        getTodayOrders: async () => {
+          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+          const today = new Date().toISOString().split('T')[0];
+          return filterByYear(orders).filter(order => {
+            const orderDate = order.date ? (order.date.includes('T') ? order.date.split('T')[0] : order.date) : '';
+            return orderDate === today;
+          });
         },
-        getSalesEstimates: async () => {
-          return JSON.parse(localStorage.getItem('estimates') || '[]');
+        getAllOrders: async () => {
+          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+          return filterByYear(orders);
+        },
+        getEstimates: async () => {
+          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          return filterByYear(estimates);
         }
       };
       
@@ -501,7 +526,8 @@
             date: today,
             customerName: 'Customer 1',
             items: [{ product_name: 'Product 1', quantity: 2, price: 500 }, { product_name: 'Product 2', quantity: 1, price: 700 }],
-            total: 1500
+            total: 1500,
+            year: selectedYear
           },
           {
             id: 2,
@@ -509,7 +535,8 @@
             date: today,
             customerName: 'Customer 2',
             items: [{ product_name: 'Product 3', quantity: 3, price: 900 }],
-            total: 2200
+            total: 2200,
+            year: selectedYear
           }
         ];
         localStorage.setItem('orders', JSON.stringify(sampleOrders));
@@ -524,7 +551,8 @@
             customerName: 'Customer 3',
             status: 'pending',
             items: [{ product_name: 'Product 1', quantity: 2, price: 500 }, { product_name: 'Product 2', quantity: 1, price: 700 }],
-            total: 1700
+            total: 1700,
+            year: selectedYear
           },
           {
             id: 102,
@@ -533,7 +561,8 @@
             customerName: 'Customer 4',
             status: 'pending',
             items: [{ product_name: 'Product 3', quantity: 3, price: 900 }],
-            total: 2700
+            total: 2700,
+            year: selectedYear
           }
         ];
         localStorage.setItem('estimates', JSON.stringify(sampleEstimates));
@@ -546,21 +575,24 @@
             code: 'P001',
             name: 'Product 1',
             quantity: 15,
-            price: 500
+            price: 500,
+            year: selectedYear
           },
           {
             id: 202,
             code: 'P002',
             name: 'Product 2',
             quantity: 25,
-            price: 700
+            price: 700,
+            year: selectedYear
           },
           {
             id: 203,
             code: 'P003',
             name: 'Product 3',
             quantity: 50,
-            price: 900
+            price: 900,
+            year: selectedYear
           }
         ];
         localStorage.setItem('inventory', JSON.stringify(sampleInventory));
@@ -695,27 +727,27 @@
     // Load dashboard data
     async function loadDashboardData() {
       try {
-        // Load today's orders from localStorage
-        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
         let todayOrders = [];
         
         try {
-          // Get orders directly from localStorage to ensure we have the most recent data
-          const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          console.log('All orders loaded from localStorage:', allOrders);
+          // Use year-scoped API to get today's orders
+          if (window.api && window.api.getTodayOrders) {
+            todayOrders = await window.api.getTodayOrders();
+          } else {
+            // Fallback: get all orders and filter by today + year
+            const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            todayOrders = filterByYear(allOrders).filter(order => {
+              const orderDate = order.date ? 
+                (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
+                '';
+              return orderDate === today;
+            });
+          }
           
-          // Filter orders for today
-          todayOrders = allOrders.filter(order => {
-            // Ensure we handle different date formats
-            const orderDate = order.date ? 
-              (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
-              '';
-            return orderDate === today;
-          });
-          
-          console.log('Today\'s orders:', todayOrders);
+          console.log('Today\'s orders (year ' + selectedYear + '):', todayOrders);
         } catch (apiError) {
-          console.error('Error loading sales orders:', apiError);
+          console.error('Error loading today orders:', apiError);
           todayOrders = [];
         }
         
@@ -724,24 +756,26 @@
 
         document.getElementById('orders-count').textContent = ordersCount;
         document.getElementById('orders-value').textContent = `₹${ordersValue.toFixed(2)}`;
-        console.log('Updated today\'s orders card:', { count: ordersCount, value: ordersValue });
 
-        // Load pending estimates from localStorage
         let pendingEstimates = [];
         
         try {
-          // Get estimates directly from localStorage
-          const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          console.log('All estimates loaded from localStorage:', allEstimates);
+          // Use year-scoped API to get estimates
+          if (window.api && window.api.getEstimates) {
+            const allEstimates = await window.api.getEstimates();
+            pendingEstimates = allEstimates.filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          } else {
+            const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+            pendingEstimates = filterByYear(allEstimates).filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          }
           
-          // Filter for pending estimates
-          pendingEstimates = allEstimates.filter(estimate => 
-            estimate.status && estimate.status.toLowerCase() === 'pending'
-          );
-          
-          console.log('Pending estimates:', pendingEstimates);
+          console.log('Pending estimates (year ' + selectedYear + '):', pendingEstimates);
         } catch (apiError) {
-          console.error('Error loading sales estimates:', apiError);
+          console.error('Error loading estimates:', apiError);
           pendingEstimates = [];
         }
         
@@ -750,43 +784,34 @@
 
         document.getElementById('pending-orders-count').textContent = pendingEstimatesCount;
         document.getElementById('pending-orders-value').textContent = `₹${pendingEstimatesValue.toFixed(2)}`;
-        console.log('Updated pending estimates card:', { count: pendingEstimatesCount, value: pendingEstimatesValue });
 
-        // Load inventory
         let inventory = [];
         
         try {
-          // Try to get inventory from API first
           if (window.api && window.api.getInventory) {
             inventory = await window.api.getInventory();
           } else {
-            // Fallback to localStorage if API not available
             inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            inventory = filterByYear(inventory);
           }
           
-          console.log('Inventory loaded:', inventory);
-          
-          // Guard against null/undefined data
           inventory = inventory && Array.isArray(inventory) ? inventory : [];
+          console.log('Inventory loaded (year ' + selectedYear + '):', inventory);
         } catch (apiError) {
           console.error('Error loading inventory:', apiError);
-          // Try localStorage as fallback if API fails
           try {
-            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            inventory = filterByYear(JSON.parse(localStorage.getItem('inventory') || '[]'));
           } catch (e) {
             inventory = [];
           }
         }
         
         const lowStockItems = inventory.filter(item => item.quantity < 30);
-        console.log('Low stock items:', lowStockItems);
 
         document.getElementById('low-stock-count').textContent = lowStockItems.length;
-        console.log('Updated inventory card:', { lowStockCount: lowStockItems.length });
       } catch (error) {
         console.error('Error in loadDashboardData:', error);
         
-        // Set all values to zero
         document.getElementById('orders-count').textContent = '0';
         document.getElementById('orders-value').textContent = '₹0.00';
         
@@ -800,27 +825,26 @@
     // Function to populate tables when cards are clicked
     async function showOrdersTable() {
       try {
-        // Get today's orders from localStorage
-        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
         let todayOrders = [];
         
         try {
-          // Get orders directly from localStorage to ensure we have the most recent data
-          const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          console.log('Loading orders table - All orders loaded:', allOrders);
-          
-          // Filter orders for today
-          todayOrders = allOrders.filter(order => {
-            // Ensure we handle different date formats
-            const orderDate = order.date ? 
-              (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
-              '';
-          return orderDate === today;
-        });
+          // Use year-scoped API to get today's orders
+          if (window.api && window.api.getTodayOrders) {
+            todayOrders = await window.api.getTodayOrders();
+          } else {
+            const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            todayOrders = filterByYear(allOrders).filter(order => {
+              const orderDate = order.date ? 
+                (order.date.includes('T') ? order.date.split('T')[0] : order.date) : 
+                '';
+              return orderDate === today;
+            });
+          }
             
-          console.log('Today\'s orders for table:', todayOrders);
+          console.log('Today\'s orders for table (year ' + selectedYear + '):', todayOrders);
         } catch (error) {
-          console.log('Error loading orders from localStorage:', error);
+          console.log('Error loading orders:', error);
           todayOrders = [];
         }
 
@@ -895,22 +919,25 @@
 
     async function showPendingOrdersTable() {
       try {
-        // Get estimates from localStorage
         let pendingEstimates = [];
         
         try {
-          // Get estimates directly from localStorage
-          const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          console.log('Loading estimates table - All estimates loaded:', allEstimates);
-          
-          // Filter for pending estimates
-          pendingEstimates = allEstimates.filter(estimate => 
-            estimate.status && estimate.status.toLowerCase() === 'pending'
-          );
+          // Use year-scoped API to get estimates
+          if (window.api && window.api.getEstimates) {
+            const allEstimates = await window.api.getEstimates();
+            pendingEstimates = allEstimates.filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          } else {
+            const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+            pendingEstimates = filterByYear(allEstimates).filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          }
             
-          console.log('Pending estimates for table:', pendingEstimates);
+          console.log('Pending estimates for table (year ' + selectedYear + '):', pendingEstimates);
         } catch (error) {
-          console.log('Error loading estimates from localStorage:', error);
+          console.log('Error loading estimates:', error);
           pendingEstimates = [];
         }
 
@@ -985,27 +1012,22 @@
 
     async function showInventoryTable() {
       try {
-        // Get inventory from localStorage
         let inventory = [];
         
         try {
-          // Try to get inventory from API first
           if (window.api && window.api.getInventory) {
             inventory = await window.api.getInventory();
           } else {
-            // Fallback to localStorage if API not available
             inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            inventory = filterByYear(inventory);
           }
           
-          console.log('Loading inventory table - Inventory loaded:', inventory);
-          
-          // Guard against null/undefined data
           inventory = inventory && Array.isArray(inventory) ? inventory : [];
+          console.log('Loading inventory table (year ' + selectedYear + '):', inventory);
         } catch (error) {
           console.log('Error loading inventory:', error);
-          // Try localStorage as fallback if API fails
           try {
-            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            inventory = filterByYear(JSON.parse(localStorage.getItem('inventory') || '[]'));
           } catch (e) {
             inventory = [];
           }
@@ -1275,7 +1297,7 @@
     }
 
     // PDF generation functions
-    function generateDashboardPDF() {
+    async function generateDashboardPDF() {
       // Initialize jsPDF
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -1325,13 +1347,22 @@
         doc.text("Today's Orders", 14, finalY);
         
         // Get today's orders
-        const today = new Date().toISOString().split('T')[0];
-        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const todayOrders = allOrders.filter(order => {
-          const orderDate = order.date ? 
-            (order.date.includes('T') ? order.date.split('T')[0] : order.date) : '';
-          return orderDate === today;
-        });
+        let todayOrders = [];
+        try {
+          if (window.api && window.api.getTodayOrders) {
+            todayOrders = await window.api.getTodayOrders();
+          } else {
+            const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            todayOrders = filterByYear(allOrders).filter(order => {
+              const orderDate = order.date ? 
+                (order.date.includes('T') ? order.date.split('T')[0] : order.date) : '';
+              return orderDate === today;
+            });
+          }
+        } catch (e) {
+          todayOrders = [];
+        }
         
         // Add orders table
         if (todayOrders.length > 0) {
@@ -1367,10 +1398,22 @@
         doc.text("Pending Estimates", 14, finalY);
         
         // Get pending estimates
-        const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-        const pendingEstimates = allEstimates.filter(estimate => 
-          estimate.status && estimate.status.toLowerCase() === 'pending'
-        );
+        let pendingEstimates = [];
+        try {
+          if (window.api && window.api.getEstimates) {
+            const allEstimates = await window.api.getEstimates();
+            pendingEstimates = allEstimates.filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          } else {
+            const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+            pendingEstimates = filterByYear(allEstimates).filter(estimate => 
+              estimate.status && estimate.status.toLowerCase() === 'pending'
+            );
+          }
+        } catch (e) {
+          pendingEstimates = [];
+        }
         
         // Add estimates table
         if (pendingEstimates.length > 0) {
@@ -1416,12 +1459,13 @@
         let inventory = [];
         try {
           if (window.api && window.api.getInventory) {
-            inventory = window.api.getInventory();
+            inventory = await window.api.getInventory();
           } else {
             inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            inventory = filterByYear(inventory);
           }
         } catch (error) {
-          inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+          inventory = filterByYear(JSON.parse(localStorage.getItem('inventory') || '[]'));
         }
         
         // Filter for low stock items

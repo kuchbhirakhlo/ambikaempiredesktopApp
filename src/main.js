@@ -38,6 +38,8 @@ app.on('window-all-closed', function () {
 // IPC handlers
 ipcMain.handle('login', async (event, credentials) => {
   try {
+    const selectedYear = Number.parseInt(credentials.year, 10) || new Date().getFullYear();
+    db.setActiveYear(selectedYear);
     const user = await db.getUserByCredentials(credentials.username, credentials.password);
   
     if (!user) {
@@ -49,11 +51,21 @@ ipcMain.handle('login', async (event, credentials) => {
       return { success: false, message: user.message || 'Your account has been blocked' };
     }
     
-    return { success: true, user };
+    return { success: true, user: { ...user, selectedYear } };
   } catch (error) {
     console.error('Login error:', error);
     return { success: false, message: 'An error occurred during login' };
   }
+});
+
+ipcMain.handle('set-active-year', async (event, year) => {
+  const selectedYear = Number.parseInt(year, 10) || new Date().getFullYear();
+  db.setActiveYear(selectedYear);
+  return { success: true, selectedYear };
+});
+
+ipcMain.handle('get-active-year', async () => {
+  return { success: true, selectedYear: db.getActiveYear() };
 });
 
 // User management

@@ -263,9 +263,13 @@
                 <option value="medium">Medium Stock</option>
                 <option value="high">High Stock</option>
               </select>
+              <select id="year-filter">
+                <!-- Years will be populated dynamically -->
+              </select>
               <button id="refresh-inventory-btn" title="Refresh Inventory Data">🔄 Refresh</button>
               <button id="add-product-btn">Add Purchase</button>
-              <span style="margin-left: 15px; font-size: 12px; color: #666;">Last updated: <span id="last-refresh-time">-</span></span>
+              <span style="margin-left: 15px; font-size: 12px; color: #666;">Last updated: <span
+                  id="last-refresh-time">-</span></span>
             </div>
           </div>
 
@@ -302,20 +306,38 @@
     let inventory = [];
 
     // Initialize the page when loaded
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', async function () {
       try {
+        // Populate year filter dropdown dynamically
+        const yearSelect = document.getElementById('year-filter');
+        const currentYear = new Date().getFullYear();
+        const startYear = 2020;
+        for (let y = currentYear + 1; y >= startYear; y--) {
+          const option = document.createElement('option');
+          option.value = y;
+          option.textContent = y;
+          yearSelect.appendChild(option);
+        }
+
         await loadInventory();
-        
+
         // Setup event listeners
         document.getElementById('search-input').addEventListener('input', filterInventory);
         document.getElementById('stock-filter').addEventListener('change', filterInventory);
+        document.getElementById('year-filter').addEventListener('change', filterInventory);
         
+        // Set default year filter to match login year
+        const loginYear = sessionStorage.getItem('selectedYear');
+        if (loginYear) {
+          document.getElementById('year-filter').value = loginYear;
+        }
+
         // Add refresh button event listener
-        document.getElementById('refresh-inventory-btn').addEventListener('click', async function() {
+        document.getElementById('refresh-inventory-btn').addEventListener('click', async function () {
           console.log("Manual refresh requested by user");
           this.textContent = "Refreshing...";
           this.disabled = true;
-          
+
           try {
             await loadInventory();
             this.textContent = "🔄 Refresh";
@@ -327,40 +349,40 @@
             alert("Failed to refresh inventory data. Please try again.");
           }
         });
-        
+
         // Listen for custom inventory-update events from same window
-        window.addEventListener('inventory-update', function(event) {
+        window.addEventListener('inventory-update', function (event) {
           console.log('Direct inventory update event received:', event.detail);
           loadInventory();
         });
-        
+
         // Listen for real-time inventory updates from other pages
-        window.addEventListener('storage', function(event) {
+        window.addEventListener('storage', function (event) {
           console.log('Storage event detected in inventory.html:', event.key);
-          
+
           // Handle different types of inventory updates
-          if (event.key === 'inventory-update-timestamp' || 
-              event.key === 'inventory-update-force' || 
-              event.key === 'product-update-timestamp' || 
-              event.key === 'order-update-timestamp' ||
-              event.key === 'inventory-force-refresh' ||
-              event.key === 'inventory-trigger-refresh') {
-            
+          if (event.key === 'inventory-update-timestamp' ||
+            event.key === 'inventory-update-force' ||
+            event.key === 'product-update-timestamp' ||
+            event.key === 'order-update-timestamp' ||
+            event.key === 'inventory-force-refresh' ||
+            event.key === 'inventory-trigger-refresh') {
+
             console.log('Detected inventory/product/order changes, refreshing data');
-            
+
             // Disable the refresh button during refresh to prevent multiple clicks
             const refreshBtn = document.getElementById('refresh-inventory-btn');
             if (refreshBtn) {
               refreshBtn.disabled = true;
               refreshBtn.textContent = "Refreshing...";
             }
-            
+
             // Add a slight delay to ensure all events are processed
             setTimeout(async () => {
               try {
                 await loadInventory();
                 console.log('Inventory data refreshed successfully');
-                
+
                 // Reset the refresh button
                 if (refreshBtn) {
                   refreshBtn.disabled = false;
@@ -368,7 +390,7 @@
                 }
               } catch (error) {
                 console.error('Error refreshing inventory data:', error);
-                
+
                 // Reset the refresh button
                 if (refreshBtn) {
                   refreshBtn.disabled = false;
@@ -391,47 +413,47 @@
         // Use getProductsWithInventory to get complete product data with inventory information
         inventory = await window.api.getInventory();
         console.log("Successfully loaded inventory data with", inventory.length, "items");
-        
+
         // Debug - log first few items to verify data
         if (inventory.length > 0) {
           console.log("Sample inventory items:", inventory.slice(0, 3));
         }
-        
+
         // Update the UI with the new data
         updateStockSummary();
         filterInventory();
-        
+
         // Update last refresh time
         const lastRefreshElement = document.getElementById('last-refresh-time');
         if (lastRefreshElement) {
           const now = new Date();
           lastRefreshElement.textContent = now.toLocaleTimeString();
         }
-        
+
         // Store timestamp of last refresh
         localStorage.setItem('inventory-last-refresh', Date.now().toString());
-        
+
         // Acknowledge that we've processed the force refresh if it exists
         if (localStorage.getItem('inventory-force-refresh')) {
           console.log("Processed forced refresh request");
           // Don't remove it as other instances might still need it
         }
-        
+
         if (localStorage.getItem('inventory-trigger-refresh')) {
           console.log("Processed inventory trigger refresh");
           // Don't remove it as other instances might still need it
         }
-        
+
         return true; // Signal successful loading
       } catch (error) {
         console.error('Error loading inventory:', error);
-        
+
         // Don't show alert on every refresh as it can be annoying for automatic updates
         // Only show alert for user-initiated actions
         if (error.userInitiated) {
           alert('Error loading inventory data. Please try again.');
         }
-        
+
         return false; // Signal failed loading
       }
     }
@@ -468,7 +490,7 @@
           stockLevelClass = 'low';
           stockLevelText = 'Low';
         } else if (item.quantity <= 72) {
-          stockLevelClass = 'medium'; 
+          stockLevelClass = 'medium';
           stockLevelText = 'Medium';
         } else {
           stockLevelClass = 'high';
@@ -483,7 +505,7 @@
           <td>${item.quantity || 0}</td>
           <td><span class="stock-level ${stockLevelClass}">${stockLevelText}</span></td>
         `;
-        
+
         // Add click event to view product details
         row.addEventListener('click', () => viewProductDetails(item));
         tableBody.appendChild(row);
@@ -574,7 +596,7 @@
     // Update stock for a specific product
     async function updateStockForProduct(item) {
       const currentQuantity = item.quantity || 0;
-      
+
       // Create a dropdown for quantity selection
       const modal = document.createElement('div');
       modal.style.position = 'fixed';
@@ -605,7 +627,7 @@
           <label for="quantity-input" style="display: block; margin-bottom: 5px;">Quantity to ADD:</label>
           <input type="number" id="quantity-input" list="quantity-list" min="1" max="1200" style="width: 100%; padding: 8px;">
           <datalist id="quantity-list">
-            ${Array.from({length: 1200}, (_, i) => i + 1).map(num => `<option value="${num}">`).join('')}
+            ${Array.from({ length: 1200 }, (_, i) => i + 1).map(num => `<option value="${num}">`).join('')}
           </datalist>
           <small style="color: #666; display: block; margin-top: 5px;">This quantity will be ADDED to the existing inventory.</small>
         </div>
@@ -631,12 +653,12 @@
       document.getElementById('submit-btn').addEventListener('click', async () => {
         const quantityToAdd = parseInt(document.getElementById('quantity-input').value, 10);
         const location = document.getElementById('location-input').value;
-        
+
         const newQuantity = currentQuantity + quantityToAdd;
-        
+
         if (confirm(`Are you sure you want to add ${quantityToAdd} units?\n\nCurrent quantity: ${currentQuantity}\nNew quantity will be: ${newQuantity}`)) {
           document.body.removeChild(modal);
-          
+
           try {
             // Call the API to update inventory
             await window.api.updateInventory({
@@ -645,10 +667,10 @@
               location,
               userId: user.id
             });
-            
+
             // Reload inventory data to show the updated quantities
             await loadInventory();
-            
+
             alert(`Stock for ${item.name} has been updated successfully!\n\nPrevious quantity: ${currentQuantity}\nAdded: ${quantityToAdd}\nNew total: ${newQuantity}`);
           } catch (error) {
             console.error('Error updating inventory:', error);
@@ -658,27 +680,35 @@
       });
     }
 
-    // Filter inventory based on search input and stock level
+    // Filter inventory based on search input, stock level, and year
     function filterInventory() {
       const searchTerm = document.getElementById('search-input').value.toLowerCase();
       const stockFilter = document.getElementById('stock-filter').value;
+      const yearFilter = document.getElementById('year-filter').value;
 
       let filteredItems = inventory.filter(item => {
         const matchesSearch =
           (item.name && item.name.toLowerCase().includes(searchTerm)) ||
           (item.code && item.code.toLowerCase().includes(searchTerm));
 
-        if (stockFilter === 'all') {
-          return matchesSearch;
-        } else if (stockFilter === 'low') {
-          return matchesSearch && item.quantity < 37;
-        } else if (stockFilter === 'medium') {
-          return matchesSearch && item.quantity >= 37 && item.quantity <= 72;
-        } else if (stockFilter === 'high') {
-          return matchesSearch && item.quantity > 72;
+        // Filter by year - check if item has a year field or use created_at date
+        let matchesYear = true;
+        if (yearFilter) {
+          const itemYear = item.year || (item.created_at ? new Date(item.created_at).getFullYear() : null);
+          matchesYear = itemYear === parseInt(yearFilter);
         }
 
-        return matchesSearch;
+        if (stockFilter === 'all') {
+          return matchesSearch && matchesYear;
+        } else if (stockFilter === 'low') {
+          return matchesSearch && matchesYear && item.quantity < 37;
+        } else if (stockFilter === 'medium') {
+          return matchesSearch && matchesYear && item.quantity >= 37 && item.quantity <= 72;
+        } else if (stockFilter === 'high') {
+          return matchesSearch && matchesYear && item.quantity > 72;
+        }
+
+        return matchesSearch && matchesYear;
       });
 
       // Sort by stock level (low to high)
@@ -692,7 +722,7 @@
       try {
         // Get all products
         const products = await window.api.getProducts();
-        
+
         // Create a dropdown HTML for the prompt
         let productSelectHtml = `
           <select id="product-select" style="width: 100%; padding: 8px; margin-bottom: 10px;">
@@ -700,7 +730,7 @@
             ${products.map(p => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join('')}
           </select>
         `;
-        
+
         // Custom prompt with dropdown
         const modal = document.createElement('div');
         modal.style.position = 'fixed';
@@ -732,7 +762,7 @@
             <label for="quantity-input" style="display: block; margin-bottom: 5px;">Quantity to ADD:</label>
             <input type="number" id="quantity-input" list="quantity-list" min="1" max="1200" style="width: 100%; padding: 8px;">
             <datalist id="quantity-list">
-              ${Array.from({length: 1200}, (_, i) => i + 1).map(num => `<option value="${num}">`).join('')}
+              ${Array.from({ length: 1200 }, (_, i) => i + 1).map(num => `<option value="${num}">`).join('')}
             </datalist>
             <small style="color: #666; display: block; margin-top: 5px;">This quantity will be ADDED to the existing inventory.</small>
           </div>
@@ -764,24 +794,24 @@
             alert('Please select a product');
             return;
           }
-          
+
           // Find the selected product to get its current quantity
           const selectedProduct = products.find(p => p.id == productId);
           if (!selectedProduct) {
             alert('Product not found');
             return;
           }
-          
+
           const currentQuantity = selectedProduct.quantity || 0;
           const newQuantity = currentQuantity + quantityToAdd;
-          
+
           // Show confirmation with current and new quantities
           if (!confirm(`Are you sure you want to add ${quantityToAdd} units?\n\nCurrent quantity: ${currentQuantity}\nNew quantity will be: ${newQuantity}`)) {
             return; // User cancelled
           }
 
           document.body.removeChild(modal);
-          
+
           try {
             // Update the inventory
             await window.api.updateInventory({
@@ -790,10 +820,10 @@
               location,
               userId: user.id
             });
-            
+
             // Reload the inventory data
             await loadInventory();
-            
+
             // Show success message with quantity details
             alert(`Inventory updated successfully!\n\nPrevious quantity: ${currentQuantity}\nAdded: ${quantityToAdd}\nNew total: ${newQuantity}`);
           } catch (error) {

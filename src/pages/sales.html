@@ -632,6 +632,11 @@
                         </select>
                         <button class="btn btn-success btn-sm" style="padding: 4px 10px; font-size: 14px;" onclick="updateEstimateStatusFromDetail()">Update</button>
                       </div>
+                      <div id="estimate-advance-edit" class="status-edit-box hidden" style="padding: 6px 10px;">
+                        <label for="estimate-detail-advance" style="font-weight: 500; margin: 0; font-size: 14px;">Advance:</label>
+                        <input id="estimate-detail-advance" type="number" min="0" step="0.01" style="width: 110px; font-size: 14px; padding: 4px 8px;">
+                        <button class="btn btn-success btn-sm" style="padding: 4px 10px; font-size: 14px;" onclick="updateEstimateAdvanceFromDetail()">Update</button>
+                      </div>
                       <button class="modal-close" style="margin-left: 10px;" onclick="closeEstimateDetail()">&times;</button>
                     </div>
                   </div>
@@ -747,12 +752,28 @@
     // Browser compatibility layer for window.api
     if (!window.api) {
       console.log('Running in browser mode - using localStorage API fallback');
+      
+      // Get selected year from login
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
+      
+      // Helper function to filter data by year
+      function filterByYear(items) {
+        if (!items || !Array.isArray(items)) return [];
+        return items.filter(item => {
+          if (item.year) return item.year === selectedYear;
+          if (item.date) return new Date(item.date).getFullYear() === selectedYear;
+          if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
+          return true;
+        });
+      }
+      
       window.api = {
         getProducts: async () => {
           return JSON.parse(localStorage.getItem('products') || '[]');
         },
         getInventory: async () => {
-          return JSON.parse(localStorage.getItem('inventory') || '[]');
+          const items = JSON.parse(localStorage.getItem('inventory') || '[]');
+          return filterByYear(items);
         },
         updateInventory: async (data) => {
           const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
@@ -764,7 +785,8 @@
             inventory.push({
               productId: data.productId,
               quantity: data.quantity,
-              location: data.location || 'Main Warehouse'
+              location: data.location || 'Main Warehouse',
+              year: selectedYear
             });
           }
           
@@ -777,7 +799,8 @@
             quantity: data.quantity,
             location: data.location || 'Main Warehouse',
             createdBy: data.userId || 1,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            year: selectedYear
           });
           
           localStorage.setItem('inventory', JSON.stringify(inventory));
@@ -785,10 +808,12 @@
           return { success: true };
         },
         getAllOrders: async () => {
-          return JSON.parse(localStorage.getItem('orders') || '[]');
+          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+          return filterByYear(orders);
         },
         getEstimates: async () => {
-          return JSON.parse(localStorage.getItem('estimates') || '[]');
+          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+          return filterByYear(estimates);
         },
         updateEstimateStatus: async (id, status) => {
           const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
@@ -816,11 +841,23 @@
         localStorage.setItem('products', JSON.stringify(sampleProducts));
         
         const sampleInventory = [
-          { id: 1, productId: 1, code: 'P001', quantity: 50, location: 'Main Warehouse' },
-          { id: 2, productId: 2, code: 'P002', quantity: 30, location: 'Main Warehouse' },
-          { id: 3, productId: 3, code: 'P003', quantity: 20, location: 'Main Warehouse' }
+          { id: 1, productId: 1, code: 'P001', quantity: 50, location: 'Main Warehouse', year: selectedYear },
+          { id: 2, productId: 2, code: 'P002', quantity: 30, location: 'Main Warehouse', year: selectedYear },
+          { id: 3, productId: 3, code: 'P003', quantity: 20, location: 'Main Warehouse', year: selectedYear }
         ];
         localStorage.setItem('inventory', JSON.stringify(sampleInventory));
+      }
+    } else {
+      // Electron mode - define filterByYear for fallback scenarios
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
+      function filterByYear(items) {
+        if (!items || !Array.isArray(items)) return [];
+        return items.filter(item => {
+          if (item.year) return item.year === selectedYear;
+          if (item.date) return new Date(item.date).getFullYear() === selectedYear;
+          if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
+          return true;
+        });
       }
     }
     
@@ -1264,6 +1301,7 @@
       }
       
       // Create the order object
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
       const newOrder = {
         id: orderNumber,
         date: orderDate,
@@ -1271,7 +1309,8 @@
         agentName: user.name || '',
         items: orderItems,
         totalItems: orderItems.length,
-        totalAmount: totalAmount
+        totalAmount: totalAmount,
+        year: selectedYear
       };
       
       try {
@@ -1322,44 +1361,22 @@
           await loadProductsAndInventory();
         }
         
-        // Try to get orders from the database
+        // Try to get orders from the year-scoped API
         try {
-          // This would be the actual API call in a real implementation
-          // orders = await window.api.getAllOrders();
-          
-          // For now, use localStorage
-          const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          if (storedOrders.length > 0) {
-            orders = storedOrders;
-          } else if (orders.length === 0) {
-            // Fallback sample data
-            // orders = [
-            //   {
-            //     id: "ORD-001",
-            //     date: "2023-05-15",
-            //     customerName: "John Doe",
-            //     agentName: user.name || "Admin",
-            //     totalItems: 3,
-            //     totalAmount: 4500,
-            //     items: [
-            //       { srNumber: 1, productCode: products[0]?.code || 'P001', name: products[0]?.name || 'Product 1', category: products[0]?.category || 'Electronics', size: products[0]?.size || 'M', quantity: 2, rate: products[0]?.price || 1200, total: (products[0]?.price || 1200) * 2 },
-            //       // Add more items using real products if available
-            //       { srNumber: 2, productCode: products[1]?.code || 'P002', name: products[1]?.name || 'Product 2', category: products[1]?.category || 'Home', size: products[1]?.size || 'S', quantity: 1, rate: products[1]?.price || 750, total: products[1]?.price || 750 }
-            //     ]
-            //   }
-            // ];
+          if (window.api && window.api.getAllOrders) {
+            orders = await window.api.getAllOrders();
+          } else {
+            const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders = filterByYear(storedOrders);
           }
+          console.log('Orders loaded (year scoped):', orders);
         } catch (error) {
           console.error('Error loading orders from API:', error);
-          // Use localStorage as fallback
+          // Use localStorage as fallback with year filter
           const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          if (storedOrders.length > 0) {
-            orders = storedOrders;
-          }
+          orders = filterByYear(storedOrders);
         }
         
-        // Render the orders table but don't return here
-        // since this is now called within showOrders
         return orders;
       } catch (error) {
         console.error('Error in loadOrders:', error);
@@ -2121,6 +2138,8 @@
         agentName: order.assigned_agent || order.agentName || (user ? user.name : 'Unknown'),
         totalItems: order.items.length,
         totalAmount: order.totalAmount,
+        advanceAmount: order.advanceAmount || 0,
+        balanceAmount: order.balanceAmount ?? (order.totalAmount - (order.advanceAmount || 0)),
         status: 'Pending',
         items: [...order.items]
       };
@@ -2147,23 +2166,20 @@
           await loadProductsAndInventory();
         }
         
-        // Try to get estimates from the database
+        // Try to get estimates from the year-scoped API
         try {
-          // This would be the actual API call in a real implementation
-          // estimates = await window.api.getEstimates();
-          
-          // For now, use localStorage
-          const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          if (storedEstimates.length > 0) {
-            estimates = storedEstimates;
+          if (window.api && window.api.getEstimates) {
+            estimates = await window.api.getEstimates();
+          } else {
+            const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+            estimates = filterByYear(storedEstimates);
           }
+          console.log('Estimates loaded (year scoped):', estimates);
         } catch (error) {
           console.error('Error loading estimates from API:', error);
-          // Use localStorage as fallback
+          // Use localStorage as fallback with year filter
           const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          if (storedEstimates.length > 0) {
-            estimates = storedEstimates;
-          }
+          estimates = filterByYear(storedEstimates);
         }
         
         // Only render when specifically viewing estimates section, 
@@ -2257,18 +2273,22 @@
       
       // Handle status edit section visibility
       const statusEditSection = document.getElementById('estimate-status-edit');
+      const advanceEditSection = document.getElementById('estimate-advance-edit');
       
       if (editable && selectedEstimateIndex !== null) {
         // Show status edit section in edit mode
         statusEditSection.classList.remove('hidden');
+        advanceEditSection.classList.remove('hidden');
         
         // Set current status in dropdown
         const estimate = estimates[selectedEstimateIndex];
         const status = estimate.status === 'packed' ? 'completed' : estimate.status;
         document.getElementById('estimate-detail-status').value = status;
+        document.getElementById('estimate-detail-advance').value = (parseFloat(estimate.advanceAmount) || 0).toFixed(2);
       } else {
         // Hide status edit section in view mode
         statusEditSection.classList.add('hidden');
+        advanceEditSection.classList.add('hidden');
       }
       
       const estimateDetailBody = document.getElementById('estimate-details-body');
@@ -2322,6 +2342,35 @@
           
           estimateDetailBody.appendChild(row);
         });
+        
+        // Add total, advance and balance summary rows
+        const advanceAmount = estimate.advanceAmount || 0;
+        const balanceAmount = estimate.balanceAmount ?? (estimate.totalAmount - advanceAmount);
+        const totalRow = document.createElement('tr');
+        totalRow.style.backgroundColor = '#f8f9fa';
+        totalRow.style.fontWeight = '600';
+        totalRow.innerHTML = `
+          <td colspan="7" style="text-align: right; padding: 12px;">Total Amount:</td>
+          <td>₹${estimate.totalAmount.toFixed(2)}</td>
+          <td></td>
+        `;
+        estimateDetailBody.appendChild(totalRow);
+        const advanceRow = document.createElement('tr');
+        advanceRow.style.backgroundColor = '#f8f9fa';
+        advanceRow.innerHTML = `
+          <td colspan="7" style="text-align: right; padding: 12px;">Advance Amount:</td>
+          <td>₹${advanceAmount.toFixed(2)}</td>
+          <td></td>
+        `;
+        estimateDetailBody.appendChild(advanceRow);
+        const balanceRow = document.createElement('tr');
+        balanceRow.style.backgroundColor = '#f8f9fa';
+        balanceRow.innerHTML = `
+          <td colspan="7" style="text-align: right; padding: 12px;">Balance:</td>
+          <td style="color: ${balanceAmount > 0 ? '#dc3545' : '#28a745'};">₹${balanceAmount.toFixed(2)}</td>
+          <td></td>
+        `;
+        estimateDetailBody.appendChild(balanceRow);
         
         // When in edit mode, add a new row for adding products
         if (editable) {
@@ -2420,8 +2469,9 @@
             item.total = item.quantity * item.rate;
           }
           
-          // Recalculate total amount
+          // Recalculate total amount and balance
           estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+          estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
           
           // Save to localStorage
           localStorage.setItem('estimates', JSON.stringify(estimates));
@@ -2440,6 +2490,7 @@
           item.rate = parseFloat(value) || 0;
           item.total = item.quantity * item.rate;
           estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+          estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
           
           // Save to localStorage
           localStorage.setItem('estimates', JSON.stringify(estimates));
@@ -2447,6 +2498,23 @@
           showEstimateDetail(true);
         }
       }
+    }
+
+    // Function to update estimate advance from detail view
+    function updateEstimateAdvanceFromDetail() {
+      if (selectedEstimateIndex === null) return;
+
+      const estimate = estimates[selectedEstimateIndex];
+      const advanceInput = document.getElementById('estimate-detail-advance');
+      const parsedAdvance = parseFloat(advanceInput?.value);
+      const advanceAmount = Number.isFinite(parsedAdvance) ? Math.max(0, parsedAdvance) : 0;
+
+      estimate.advanceAmount = advanceAmount;
+      estimate.balanceAmount = estimate.totalAmount - advanceAmount;
+
+      localStorage.setItem('estimates', JSON.stringify(estimates));
+      broadcastEstimateUpdate('update', estimate);
+      showEstimateDetail(true);
     }
 
     // Function to close order detail modal
@@ -2932,6 +3000,7 @@
       const totalAmount = dummyItems.reduce((sum, item) => sum + item.total, 0);
       
       // Create the dummy estimate
+      const dummyAdvance = 500;
       const dummyEstimate = {
         id: 'EST-DUMMY-001',
         orderId: 'ORD-DUMMY-001',
@@ -2940,6 +3009,8 @@
         agentName: 'Test Agent',
         totalItems: dummyItems.length,
         totalAmount: totalAmount,
+        advanceAmount: dummyAdvance,
+        balanceAmount: totalAmount - dummyAdvance,
         status: 'Pending',
         items: dummyItems
       };
@@ -3086,20 +3157,30 @@
                     </tr>
                     
                     <tr style="background-color: #e0e0e0;">
-                      <td colspan="6" style="border: 1px solid #000; text-align: right; padding: 2px; font-size: 12px; font-family: 'Open Sans', sans-serif;">
+                      <td colspan="8" style="border: 1px solid #000; text-align: right; padding: 2px; font-size: 12px; font-family: 'Open Sans', sans-serif;">
                         <div style="display: flex; justify-content: space-between;">
                           <div>Packages&nbsp;&nbsp;&nbsp;0</div>
                           <div></div>
                         </div>
                       </td>
-                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">P & F. Charges</td>
-                      <td style="text-align: right; padding: 2px; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">0.00</td>
                     </tr>
                     <tr style="background-color: #e0e0e0;">
                       <td colspan="6" style="border: 1px solid #000; font-family: 'Open Sans', sans-serif;"></td>
                       <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${page === totalPages - 1 ? 'TOTAL Amount' : 'Page Total'}</td>
                       <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${page === totalPages - 1 ? estimate.totalAmount.toFixed(2) : pageTotal.toFixed(2)}</td>
                     </tr>
+                    ${page === totalPages - 1 ? `
+                    <tr style="background-color: #e0e0e0;">
+                      <td colspan="6" style="border: 1px solid #000; font-family: 'Open Sans', sans-serif;"></td>
+                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">Advance Amount</td>
+                      <td style="text-align: right; padding: 2px; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${(estimate.advanceAmount || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr style="background-color: #e0e0e0;">
+                      <td colspan="6" style="border: 1px solid #000; font-family: 'Open Sans', sans-serif;"></td>
+                      <td style="text-align: right; padding: 2px; font-weight: bold; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">Balance</td>
+                      <td style="text-align: right; padding: 2px; font-size: 12px; white-space: nowrap; font-family: 'Open Sans', sans-serif; border: 1px solid #000;">${(estimate.balanceAmount ?? (estimate.totalAmount - (estimate.advanceAmount || 0))).toFixed(2)}</td>
+                    </tr>
+                    ` : ''}
                   </tbody>
                 </table>
                 
@@ -3144,6 +3225,7 @@
       // Update totals
       estimate.totalItems = estimate.items.length;
       estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
+      estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
       
       // Save to localStorage
       localStorage.setItem('estimates', JSON.stringify(estimates));
@@ -3254,9 +3336,10 @@
       
       estimate.items.push(newItem);
       
-      // Update total amount
+      // Update total amount and balance
       estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
       estimate.totalItems = estimate.items.length;
+      estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
       
       // Update localStorage
       localStorage.setItem('estimates', JSON.stringify(estimates));

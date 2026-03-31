@@ -23,6 +23,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return user.username.substring(0, 2).toUpperCase();
     };
 
+    // Get selected year
+    const selectedYear = sessionStorage.getItem('selectedYear') || new Date().getFullYear();
+
     // Create navbar HTML structure
     navbarContainer.innerHTML = `
       <div class="navbar-backdrop"></div>
@@ -38,6 +41,9 @@ document.addEventListener("DOMContentLoaded", function () {
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
+        </div>
+        <div class="year-indicator" style="background-color: #4a6cf7; color: white; text-align: center; padding: 8px; font-size: 14px; font-weight: 600;">
+          Year: ${selectedYear}
         </div>
         <nav class="navbar-menu">
           <ul>
@@ -181,6 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sidebarLogoutBtn) {
       sidebarLogoutBtn.addEventListener("click", () => {
         sessionStorage.removeItem("user");
+        sessionStorage.removeItem("selectedYear");
         window.location.href = isSubpage ? "../../pages/login.html" : "login.html";
       });
     }

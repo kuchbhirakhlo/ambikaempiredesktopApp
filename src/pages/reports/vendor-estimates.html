@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vendor Estimates Report</title>
   <link rel="stylesheet" href="../../components/Navbar.css">
+  <!-- jsPDF library for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -324,12 +327,90 @@
 
     // Export handlers
     document.getElementById('export-pdf-btn').addEventListener('click', () => {
-      alert('PDF export functionality would be implemented here');
+      exportToPDF();
     });
 
     document.getElementById('export-excel-btn').addEventListener('click', () => {
-      alert('Excel export functionality would be implemented here');
+      exportToExcel();
     });
+
+    // Function to export data to PDF
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(18);
+      doc.text('Vendor Estimates Report', 14, 22);
+      
+      // Add date
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+      
+      // Create table data
+      const tableData = estimates.map(est => [
+        est.id,
+        est.vendorName,
+        est.category,
+        est.date,
+        est.items.join(', '),
+        '₹' + est.total.toLocaleString('en-IN'),
+        est.status
+      ]);
+      
+      doc.autoTable({
+        startY: 40,
+        head: [['Estimate ID', 'Vendor Name', 'Category', 'Date', 'Items', 'Amount', 'Status']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [74, 108, 247],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 244, 255]
+        }
+      });
+      
+      // Save the PDF
+      doc.save('vendor_estimates.pdf');
+    }
+
+    // Function to export data to Excel
+    function exportToExcel() {
+      // Create CSV content
+      let csvContent = '\uFEFF'; // BOM for UTF-8
+      
+      // Add header row
+      csvContent += 'Estimate ID,Vendor Name,Category,Date,Items,Amount,Status\n';
+      
+      // Add data rows
+      estimates.forEach(est => {
+        const rowData = [
+          est.id,
+          '"' + est.vendorName.replace(/"/g, '""') + '"',
+          '"' + est.category.replace(/"/g, '""') + '"',
+          est.date,
+          '"' + est.items.join(', ').replace(/"/g, '""') + '"',
+          est.total,
+          '"' + est.status.replace(/"/g, '""') + '"'
+        ];
+        csvContent += rowData.join(',') + '\n';
+      });
+      
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'vendor_estimates.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
 </body>
 </html> 

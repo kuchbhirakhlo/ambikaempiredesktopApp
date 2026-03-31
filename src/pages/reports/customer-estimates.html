@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Comparison Chart</title>
   <link rel="stylesheet" href="../../components/Navbar.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12,11 +15,13 @@
       margin: 0;
       padding: 0;
     }
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -25,15 +30,18 @@
       padding-bottom: 10px;
       border-bottom: 1px solid #eaeaea;
     }
+
     header h1 {
       color: #333;
       margin: 0;
       font-size: 24px;
     }
+
     .header-actions {
       display: flex;
       gap: 10px;
     }
+
     .btn {
       padding: 8px 16px;
       border-radius: 4px;
@@ -43,19 +51,23 @@
       border: none;
       transition: background-color 0.2s;
     }
+
     .btn-primary {
       background-color: #4a6cf7;
       color: white;
     }
+
     .btn-outline {
       background-color: transparent;
       border: 1px solid #4a6cf7;
       color: #4a6cf7;
     }
+
     .btn-secondary {
       background-color: #6c757d;
       color: white;
     }
+
     .back-link {
       display: inline-flex;
       align-items: center;
@@ -64,6 +76,7 @@
       color: #4a6cf7;
       margin-bottom: 20px;
     }
+
     .report-table-container {
       background-color: white;
       border-radius: 8px;
@@ -71,10 +84,12 @@
       padding: 20px;
       margin-bottom: 20px;
     }
+
     .report-table {
       width: 100%;
       border-collapse: collapse;
     }
+
     .report-table th {
       background-color: #f5f5f5;
       padding: 12px 15px;
@@ -83,10 +98,12 @@
       color: #333;
       border-bottom: 1px solid #eaeaea;
     }
+
     .report-table td {
       padding: 12px 15px;
       border-bottom: 1px solid #eaeaea;
     }
+
     .report-filters {
       background-color: white;
       border-radius: 8px;
@@ -94,15 +111,18 @@
       padding: 20px;
       margin-bottom: 20px;
     }
+
     .filter-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 15px;
       margin-bottom: 15px;
     }
+
     .form-group {
       margin-bottom: 0;
     }
+
     .form-group label {
       display: block;
       margin-bottom: 5px;
@@ -110,35 +130,42 @@
       color: #555;
       font-size: 14px;
     }
-    .form-group input, .form-group select {
+
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 14px;
     }
+
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       margin-bottom: 20px;
     }
+
     .summary-card {
       background-color: white;
       border-radius: 8px;
       padding: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
+
     .summary-card h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
       color: #666;
     }
+
     .summary-value {
       font-size: 24px;
       font-weight: 600;
       color: #4a6cf7;
     }
+
     .chart-container {
       background-color: white;
       border-radius: 8px;
@@ -147,12 +174,14 @@
       margin-bottom: 20px;
       height: 400px;
     }
+
     .loading {
       text-align: center;
       padding: 20px;
       font-size: 16px;
       color: #666;
     }
+
     .no-data {
       text-align: center;
       padding: 30px;
@@ -162,16 +191,17 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app-container">
     <!-- Navbar container -->
     <div id="navbar-container"></div>
-    
+
     <!-- Main content -->
     <div class="main-content">
       <div class="container">
         <a href="../reports.html" class="back-link">← Back to Reports</a>
-        
+
         <header>
           <h1>Order Comparison Chart</h1>
           <div class="header-actions">
@@ -214,16 +244,22 @@
     }
 
     let productList = [];
+    let refreshIntervalId = null;
 
-    // Build list: Product Code, Product Name, Price, Purchased Qty (inventory/transactions), Sold Qty (estimates), In Stock (inventory)
-    function buildProductList() {
-      const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-      const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-      const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+    // Build list from live DB-backed APIs:
+    // Product Code, Product Name, Price, Purchased Qty (from inventory-page adds), Sold Qty (from sales-driven stock deductions), In Stock (from inventory)
+    async function buildProductList() {
+      const [products, inventory, transactions] = await Promise.all([
+        window.api.getProducts(),
+        window.api.getInventory(),
+        window.api.getTransactions()
+      ]);
 
       const byCode = {};
       const idToKey = {};
-      inventory.forEach(item => {
+
+      // First, add all products to ensure we have all product codes
+      products.forEach(item => {
         const code = (item.code || item.productCode || '').toString().trim();
         const id = item.productId != null ? item.productId : item.id;
         const key = code || 'id_' + id;
@@ -234,44 +270,81 @@
           price: parseFloat(item.price) || 0,
           purchased: 0,
           sold: 0,
-          inStock: parseInt(item.quantity, 10) || 0
+          inStock: 0
         };
       });
 
+      // Process inventory data for live in-stock quantity
+      inventory.forEach(item => {
+        const code = (item.code || item.productCode || '').toString().trim();
+        const id = item.productId != null ? item.productId : item.id;
+        const key = code || 'id_' + id;
+        if (id != null) idToKey[id] = key;
+        if (!byCode[key]) {
+          byCode[key] = {
+            code: item.code || item.productCode || '-',
+            name: item.name || '-',
+            price: parseFloat(item.price) || 0,
+            purchased: 0,
+            sold: 0,
+            inStock: 0
+          };
+        }
+        // Set inStock from inventory quantity
+        byCode[key].inStock = parseInt(item.quantity, 10) || 0;
+      });
+
+      // Process inventory transactions to get Purchased Qty (All Time) from inventory page updates.
+      // Description format is: "Product quantity updated from X to Y".
+      // Count only positive increases (Y - X) as purchased quantity.
       transactions.forEach(t => {
-        const pid = t.productId != null ? t.productId : t.productId;
+        if (t.transaction_type !== 'inventory') return;
+        const pid = t.related_id != null ? t.related_id : t.productId;
         const key = idToKey[pid] || (pid != null ? 'id_' + pid : null);
         const row = key ? byCode[key] : null;
         if (!row) return;
-        const qty = parseInt(t.quantity, 10) || 0;
-        if (qty > 0) row.purchased += qty;
+
+        const desc = (t.description || '').toString();
+        const match = desc.match(/from\s+(-?\d+)\s+to\s+(-?\d+)/i);
+        if (!match) return;
+
+        const oldQty = parseInt(match[1], 10) || 0;
+        const newQty = parseInt(match[2], 10) || 0;
+        const delta = newQty - oldQty;
+        if (delta > 0) row.purchased += delta;
       });
 
-      estimates.forEach(est => {
-        const items = est.items || [];
-        items.forEach(item => {
-          const code = (item.productCode || item.code || '').toString().trim();
-          if (!code) return;
-          if (!byCode[code]) {
-            byCode[code] = {
-              code: code,
-              name: item.name || '-',
-              price: parseFloat(item.rate || item.price) || 0,
-              purchased: 0,
-              sold: 0,
-              inStock: 0
-            };
-          }
-          byCode[code].sold += parseInt(item.quantity, 10) || 0;
-        });
+      // Process inventory transactions for Sold Qty (from Sales).
+      // Sales flow decreases inventory, so count negative deltas as sold quantity.
+      transactions.forEach(t => {
+        if (t.transaction_type !== 'inventory') return;
+        const pid = t.related_id != null ? t.related_id : t.productId;
+        const key = idToKey[pid] || (pid != null ? 'id_' + pid : null);
+        const row = key ? byCode[key] : null;
+        if (!row) return;
+
+        const desc = (t.description || '').toString();
+        const match = desc.match(/from\s+(-?\d+)\s+to\s+(-?\d+)/i);
+        if (!match) return;
+
+        const oldQty = parseInt(match[1], 10) || 0;
+        const newQty = parseInt(match[2], 10) || 0;
+        const delta = newQty - oldQty;
+        if (delta < 0) row.sold += Math.abs(delta);
       });
 
-      productList = Object.values(byCode).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      // Convert to array and sort by Product Code in ascending order (numeric)
+      productList = Object.values(byCode).sort((a, b) => {
+        // Extract numeric part from product code (e.g., "5601" from "5601" or "P001")
+        const aNum = parseInt(a.code.replace(/\D/g, '')) || 0;
+        const bNum = parseInt(b.code.replace(/\D/g, '')) || 0;
+        return aNum - bNum;
+      });
     }
 
-    function loadData() {
+    async function loadData() {
       try {
-        buildProductList();
+        await buildProductList();
         renderTable();
         return true;
       } catch (error) {
@@ -320,24 +393,149 @@
             <td colspan="6" class="loading">Refreshing data...</td>
           </tr>
         `;
-        setTimeout(loadData, 300);
+        setTimeout(() => {
+          loadData();
+        }, 300);
       });
+
+      // Keep report close to real-time by polling DB periodically.
+      refreshIntervalId = setInterval(() => {
+        loadData();
+      }, 5000);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (refreshIntervalId) {
+        clearInterval(refreshIntervalId);
+      }
     });
 
     window.addEventListener('storage', (event) => {
-      if (['inventory', 'transactions', 'estimates', 'products'].includes(event.key)) {
+      if ([
+        'inventory',
+        'transactions',
+        'estimates',
+        'products',
+        'inventory-update-timestamp',
+        'inventory-force-refresh',
+        'inventory-trigger-refresh'
+      ].includes(event.key)) {
         loadData();
       }
     });
 
     // Export handlers
     document.getElementById('export-pdf-btn').addEventListener('click', () => {
-      alert('PDF export functionality would be implemented here');
+      exportToPDF();
     });
 
     document.getElementById('export-excel-btn').addEventListener('click', () => {
-      alert('Excel export functionality would be implemented here');
+      exportToExcel();
     });
+
+    // Function to export data to PDF
+    function exportToPDF() {
+      // Check if jsPDF is available
+      if (typeof window.jspdf === 'undefined') {
+        // Load jsPDF dynamically
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+          const { jsPDF } = window.jspdf;
+          generatePDF(jsPDF);
+        };
+        document.head.appendChild(script);
+      } else {
+        const { jsPDF } = window.jspdf;
+        generatePDF(jsPDF);
+      }
+    }
+
+    function generatePDF(jsPDF) {
+      const doc = new jsPDF();
+
+      // Add title
+      doc.setFontSize(18);
+      doc.text('Order Comparison Chart', 14, 22);
+
+      // Add date
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+      // Create table data
+      const tableData = productList.map(row => [
+        row.code,
+        row.name,
+        row.price ? '₹' + row.price.toFixed(2) : '-',
+        row.purchased.toString(),
+        row.sold.toString(),
+        row.inStock.toString()
+      ]);
+
+      // Define table columns
+      const columns = [
+        { header: 'Product Code', dataKey: 'code' },
+        { header: 'Product Name', dataKey: 'name' },
+        { header: 'Price (₹)', dataKey: 'price' },
+        { header: 'Purchased Qty', dataKey: 'purchased' },
+        { header: 'Sold Qty', dataKey: 'sold' },
+        { header: 'In Stock Qty', dataKey: 'inStock' }
+      ];
+
+      // Create the table
+      doc.autoTable({
+        startY: 40,
+        head: [columns.map(col => col.header)],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [74, 108, 247],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 244, 255]
+        }
+      });
+
+      // Save the PDF
+      doc.save('order_comparison_chart.pdf');
+    }
+
+    // Function to export data to Excel
+    function exportToExcel() {
+      // Create CSV content
+      let csvContent = '\uFEFF'; // BOM for UTF-8
+
+      // Add header row
+      csvContent += 'Product Code,Product Name,Price (₹),Purchased Qty (All Time),Sold Qty (from Sales),In Stock Qty\n';
+
+      // Add data rows
+      productList.forEach(row => {
+        const rowData = [
+          row.code,
+          '"' + (row.name || '').replace(/"/g, '""') + '"',
+          row.price || '',
+          row.purchased,
+          row.sold,
+          row.inStock
+        ];
+        csvContent += rowData.join(',') + '\n';
+      });
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'order_comparison_chart.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
 </body>
-</html> 
+
+</html>

@@ -225,6 +225,7 @@
     .details-section {
       margin-bottom: 25px;
     }
+
     .details-section h3 {
       margin: 0 0 15px 0;
       color: #333;
@@ -232,17 +233,20 @@
       padding-bottom: 8px;
       border-bottom: 1px solid #eaeaea;
     }
+
     .details-row {
       display: flex;
       margin-bottom: 12px;
       padding: 8px 0;
       border-bottom: 1px solid #f5f5f5;
     }
+
     .details-label {
       width: 150px;
       font-weight: 500;
       color: #666;
     }
+
     .details-value {
       flex: 1;
       color: #333;
@@ -364,7 +368,8 @@
         <div class="form-group">
           <label for="product-code">Product Code</label>
           <input type="text" id="product-code" required>
-          <small id="product-code-error" style="color: #dc3545; display: none;">This product code already exists. Please use a unique code.</small>
+          <small id="product-code-error" style="color: #dc3545; display: none;">This product code already exists. Please
+            use a unique code.</small>
         </div>
         <div class="form-group">
           <label for="product-name">Product Name</label>
@@ -416,6 +421,7 @@
 
     const user = JSON.parse(userString);
     const isAdmin = user.role === 'admin';
+    const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
 
     // Products array to store loaded products
     let products = [];
@@ -424,13 +430,13 @@
     // Load suppliers from database
     async function loadSuppliers() {
       try {
-        suppliers = await window.api.getVendors();
+        suppliers = await window.api.getVendors(selectedYear);
         console.log('Suppliers loaded:', suppliers);
-        
+
         // Populate supplier dropdown
         const supplierSelect = document.getElementById('product-supplier');
         supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-        
+
         suppliers.forEach(supplier => {
           const option = document.createElement('option');
           option.value = supplier.id;
@@ -447,15 +453,15 @@
       // Initialize jsPDF
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      
+
       // Add title
       doc.setFontSize(18);
       doc.text('Products List', 14, 22);
-      
+
       // Add date
       doc.setFontSize(11);
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-      
+
       // Define table columns
       const columns = [
         { header: 'Serial No.', dataKey: 'id' },
@@ -466,7 +472,7 @@
         { header: 'Supplier', dataKey: 'supplier' },
         { header: 'Rate (₹)', dataKey: 'price' }
       ];
-      
+
       // Convert products data for autotable
       const data = products.map((product, index) => {
         const supplier = suppliers.find(s => s.id === product.supplierId);
@@ -480,7 +486,7 @@
           price: product.price ? product.price.toFixed(2) : '0.00'
         };
       });
-      
+
       // Create the autotable
       doc.autoTable({
         startY: 40,
@@ -496,7 +502,7 @@
           fillColor: [240, 244, 255]
         }
       });
-      
+
       // Save the PDF
       doc.save('products_list.pdf');
     }
@@ -543,10 +549,10 @@
       const event = new CustomEvent('product-update', {
         detail: { action, product }
       });
-      
+
       // Dispatch the event to window for local updates
       window.dispatchEvent(event);
-      
+
       // Also store latest version in sessionStorage for cross-page updates
       const timestamp = new Date().getTime();
       sessionStorage.setItem('product-update-timestamp', timestamp.toString());
@@ -557,7 +563,7 @@
     // Load products from database
     async function loadProducts() {
       try {
-        products = await window.api.getProducts();
+        products = await window.api.getProducts(selectedYear);
         console.log('Products loaded from database:', products);
         filterProducts();
       } catch (error) {
@@ -570,7 +576,7 @@
     function renderProductsTable(productsList) {
       const tableBody = document.getElementById('products-table-body');
       tableBody.innerHTML = '';
-      
+
       console.log('Rendering products table with data:', productsList);
 
       productsList.forEach((product, index) => {
@@ -596,12 +602,12 @@
       document.querySelectorAll('.view-btn').forEach(btn => {
         btn.addEventListener('click', handleViewProduct);
       });
-      
+
       // Add event listeners to edit buttons
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', handleEditProduct);
       });
-      
+
       // Add event listeners to delete buttons
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', handleDeleteProduct);
@@ -643,7 +649,7 @@
       const product = products.find(p => p.id === productId);
       if (product) {
         console.log('Viewing product:', product);
-        
+
         document.getElementById('view-product-code').textContent = product.code || '-';
         document.getElementById('view-product-name').textContent = product.name || '-';
         document.getElementById('view-product-size').textContent = product.size || '-';
@@ -665,10 +671,10 @@
     function handleEditProduct(e) {
       const productId = parseInt(e.target.dataset.id);
       const product = products.find(p => p.id === productId);
-      
+
       if (product) {
         console.log('Editing product:', product);
-        
+
         document.getElementById('product-modal-title').textContent = 'Edit Product';
         document.getElementById('product-code').value = product.code || '';
         document.getElementById('product-name').value = product.name || '';
@@ -676,23 +682,23 @@
         document.getElementById('product-category').value = product.category || '';
         document.getElementById('product-supplier').value = product.supplierId || '';
         document.getElementById('product-price').value = product.price || '0';
-        
+
         // Store current product id for update
         document.getElementById('product-form').dataset.productId = product.id;
-        
+
         // Clear any validation errors
         document.getElementById('product-code-error').style.display = 'none';
         document.getElementById('product-code').classList.remove('error');
-        
+
         const productModal = document.getElementById('product-modal');
         productModal.style.display = 'flex';
       }
     }
-    
+
     // Delete product handler
     async function handleDeleteProduct(e) {
       const productId = parseInt(e.target.dataset.id);
-      
+
       if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
         try {
           await window.api.deleteProduct(productId);
@@ -704,22 +710,22 @@
         }
       }
     }
-    
+
     // Add Product button event listener
     document.getElementById('add-product-btn').addEventListener('click', () => {
       document.getElementById('product-modal-title').textContent = 'Add New Product';
       document.getElementById('product-form').reset();
       // Clear product ID for adding new product
       document.getElementById('product-form').dataset.productId = '';
-      
+
       // Clear any validation errors
       document.getElementById('product-code-error').style.display = 'none';
       document.getElementById('product-code').classList.remove('error');
-      
+
       const productModal = document.getElementById('product-modal');
       productModal.style.display = 'flex';
     });
-    
+
     // Close modals
     document.querySelectorAll('.close-btn, .close-modal').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -727,19 +733,19 @@
         document.getElementById('view-modal').style.display = 'none';
       });
     });
-    
+
     // Product form submit handler
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const productCode = document.getElementById('product-code').value;
-      
+
       // Check for duplicate product code on form submission
       if (isDuplicateProductCode(productCode)) {
         document.getElementById('product-code-error').style.display = 'block';
         return; // Prevent form submission
       }
-      
+
       const productData = {
         code: productCode,
         name: document.getElementById('product-name').value,
@@ -748,19 +754,19 @@
         supplierId: parseInt(document.getElementById('product-supplier').value),
         price: parseFloat(document.getElementById('product-price').value)
       };
-      
+
       console.log('Product data being submitted:', productData);
-      
+
       try {
         let updatedProduct;
         const productId = document.getElementById('product-form').dataset.productId;
-        
+
         if (productId) {
           // Update existing product
           console.log('Updating product with ID:', productId);
           updatedProduct = await window.api.updateProduct(parseInt(productId), productData);
           console.log('Updated product result:', updatedProduct);
-          
+
           // Close modal after updating
           document.getElementById('product-modal').style.display = 'none';
         } else {
@@ -768,10 +774,10 @@
           console.log('Adding new product');
           updatedProduct = await window.api.addProduct(productData);
           console.log('Added product result:', updatedProduct);
-          
+
           // Reset form for next product entry instead of closing modal
           document.getElementById('product-form').reset();
-          
+
           // Show success message
           const successMessage = document.createElement('div');
           successMessage.textContent = `Product ${productData.name} added successfully!`;
@@ -779,26 +785,26 @@
           successMessage.style.marginBottom = '15px';
           successMessage.style.fontWeight = '500';
           successMessage.id = 'product-success-message';
-          
+
           // Remove any existing success message
           const existingMessage = document.getElementById('product-success-message');
           if (existingMessage) {
             existingMessage.remove();
           }
-          
+
           // Insert before the form
           const form = document.getElementById('product-form');
           form.parentNode.insertBefore(successMessage, form);
-          
+
           // Auto-focus the product code field for the next entry
           document.getElementById('product-code').focus();
-          
+
           // Hide success message after 3 seconds
           setTimeout(() => {
             successMessage.style.display = 'none';
           }, 3000);
         }
-        
+
         // Refresh product list
         await loadProducts();
       } catch (error) {
@@ -808,7 +814,7 @@
     });
 
     // Add real-time product code validation
-    document.getElementById('product-code').addEventListener('input', function() {
+    document.getElementById('product-code').addEventListener('input', function () {
       const productCode = this.value.trim();
       if (productCode && isDuplicateProductCode(productCode)) {
         document.getElementById('product-code-error').style.display = 'block';
@@ -818,15 +824,15 @@
         this.classList.remove('error');
       }
     });
-    
+
     // Function to check if product code already exists
     function isDuplicateProductCode(code) {
       // Get product ID if in edit mode
       const productId = document.getElementById('product-form').dataset.productId;
       const currentProductId = productId ? parseInt(productId) : null;
-      
+
       // Check if code exists in any product except the current one being edited
-      return products.some(product => 
+      return products.some(product =>
         product.code === code && (!currentProductId || product.id !== currentProductId)
       );
     }
@@ -841,4 +847,5 @@
     loadProducts();
   </script>
 </body>
+
 </html> a

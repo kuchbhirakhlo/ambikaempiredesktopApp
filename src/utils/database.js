@@ -27,6 +27,17 @@ console.log(`Database path: ${dbPath}`);
  */
 class SqliteDatabase {
   constructor() {
+    this.activeYear = new Date().getFullYear();
+    this.yearScopedTables = new Set([
+      'customers',
+      'agents',
+      'products',
+      'inventory',
+      'orders',
+      'transactions',
+      'estimates'
+    ]);
+
     this.db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         console.error('Could not connect to database', err);
@@ -43,6 +54,19 @@ class SqliteDatabase {
         this.ensureTablesExist();
       }
     });
+  }
+
+  normalizeYear(year) {
+    const parsed = Number.parseInt(year, 10);
+    return Number.isNaN(parsed) ? new Date().getFullYear() : parsed;
+  }
+
+  setActiveYear(year) {
+    this.activeYear = this.normalizeYear(year);
+  }
+
+  getActiveYear() {
+    return this.activeYear;
   }
   
   /**
@@ -369,6 +393,8 @@ class SqliteDatabase {
    * Ensure all required tables exist, even for existing databases
    */
   ensureTablesExist() {
+    this.ensureYearColumns();
+
     // Check for estimates table
     this.db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="estimates"', (err, result) => {
       if (err) {
@@ -593,6 +619,55 @@ class SqliteDatabase {
       }
     });
   }
+
+  ensureYearColumns() {
+    const tableYearConfig = {
+      customers: 'created_at',
+      agents: 'created_at',
+      products: 'created_at',
+      inventory: 'last_updated',
+      orders: 'date',
+      transactions: 'date',
+      estimates: 'date'
+    };
+
+    Object.entries(tableYearConfig).forEach(([table, sourceColumn]) => {
+      this.db.all(`PRAGMA table_info(${table})`, (err, columns) => {
+        if (err || !columns) {
+          if (err) {
+            console.error(`Error checking ${table} schema:`, err);
+          }
+          return;
+        }
+
+        const hasYearColumn = columns.some(col => col.name === 'year');
+        if (hasYearColumn) {
+          return;
+        }
+
+        console.log(`Adding year column to ${table} table`);
+        this.db.run(`ALTER TABLE ${table} ADD COLUMN year INTEGER`, (alterErr) => {
+          if (alterErr) {
+            console.error(`Error adding year column to ${table}:`, alterErr);
+            return;
+          }
+
+          const fallbackYear = new Date().getFullYear();
+          this.db.run(
+            `UPDATE ${table}
+             SET year = COALESCE(CAST(strftime('%Y', ${sourceColumn}) AS INTEGER), ?)
+             WHERE year IS NULL`,
+            [fallbackYear],
+            (updateErr) => {
+              if (updateErr) {
+                console.error(`Error backfilling year values for ${table}:`, updateErr);
+              }
+            }
+          );
+        });
+      });
+    });
+  }
   
   /**
    * Close the database connection
@@ -620,7 +695,14 @@ class SqliteDatabase {
    */
   getAll(table) {
     return new Promise((resolve, reject) => {
-      this.db.all(`SELECT * FROM ${table}`, (err, rows) => {
+      let sql = `SELECT * FROM ${table}`;
+      const params = [];
+      if (this.yearScopedTables.has(table)) {
+        sql += ' WHERE year = ?';
+        params.push(this.getActiveYear());
+      }
+
+      this.db.all(sql, params, (err, rows) => {
         if (err) {
           reject(err);
           return;
@@ -638,7 +720,14 @@ class SqliteDatabase {
    */
   getById(table, id) {
     return new Promise((resolve, reject) => {
-      this.db.get(`SELECT * FROM ${table} WHERE id = ?`, [id], (err, row) => {
+      let sql = `SELECT * FROM ${table} WHERE id = ?`;
+      const params = [id];
+      if (this.yearScopedTables.has(table)) {
+        sql += ' AND year = ?';
+        params.push(this.getActiveYear());
+      }
+
+      this.db.get(sql, params, (err, row) => {
         if (err) {
           reject(err);
           return;
@@ -686,6 +775,10 @@ class SqliteDatabase {
         // Add default values for status if needed and table has the column
         if (table === 'users' && tableColumns.includes('status') && !validData.status) {
           validData.status = 'active';
+        }
+
+        if (this.yearScopedTables.has(table) && tableColumns.includes('year')) {
+          validData.year = this.getActiveYear();
         }
         
         // Create arrays for column names and placeholders
@@ -744,10 +837,15 @@ class SqliteDatabase {
         }
         
         // Create SQL query
-        const sql = `UPDATE ${table} SET ${updates.join(', ')} WHERE id = ?`;
+        let sql = `UPDATE ${table} SET ${updates.join(', ')} WHERE id = ?`;
+        const queryParams = [...values, id];
+        if (this.yearScopedTables.has(table)) {
+          sql += ' AND year = ?';
+          queryParams.push(this.getActiveYear());
+        }
         
         // Execute update
-        this.db.run(sql, [...values, id], function(err) {
+        this.db.run(sql, queryParams, function(err) {
           if (err) {
             reject(err);
             return;
@@ -778,7 +876,14 @@ class SqliteDatabase {
    */
   delete(table, id) {
     return new Promise((resolve, reject) => {
-      this.db.run(`DELETE FROM ${table} WHERE id = ?`, [id], function(err) {
+      let sql = `DELETE FROM ${table} WHERE id = ?`;
+      const params = [id];
+      if (this.yearScopedTables.has(table)) {
+        sql += ' AND year = ?';
+        params.push(this.getActiveYear());
+      }
+
+      this.db.run(sql, params, function(err) {
         if (err) {
           reject(err);
           return;
@@ -899,15 +1004,16 @@ class SqliteDatabase {
     const sql = `
       SELECT 
         p.id, p.code, p.name, p.size, p.category, p.price, p.cost, p.description, 
-        p.created_at, p.updated_at, p.supplierId,
+        p.created_at, p.updated_at, p.supplierId, p.year,
         i.quantity, i.location,
         v.name as supplierName
       FROM products p
-      LEFT JOIN inventory i ON p.id = i.product_id
+      LEFT JOIN inventory i ON p.id = i.product_id AND i.year = p.year
       LEFT JOIN vendors v ON p.supplierId = v.id
+      WHERE p.year = ?
     `;
     
-    return this.query(sql);
+    return this.query(sql, [this.getActiveYear()]);
   }
   
   /**
@@ -918,9 +1024,10 @@ class SqliteDatabase {
     const sql = `
       SELECT * FROM orders 
       WHERE date(date) = date('now')
+      AND year = ?
     `;
     
-    return this.query(sql);
+    return this.query(sql, [this.getActiveYear()]);
   }
   
   /**
@@ -932,9 +1039,10 @@ class SqliteDatabase {
     const sql = `
       SELECT * FROM orders 
       WHERE status = ?
+      AND year = ?
     `;
     
-    return this.query(sql, [status]);
+    return this.query(sql, [status, this.getActiveYear()]);
   }
   
   /**
@@ -996,15 +1104,16 @@ class SqliteDatabase {
           // Insert the order
           this.db.run(
             `INSERT INTO orders (
-              order_number, date, vendor_id, total, status, 
+              order_number, date, vendor_id, total, status, year,
               payment_status, payment_method, created_by, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
             [
               orderInfo.order_number,
               orderInfo.date,
               orderInfo.vendor_id,
               orderInfo.total,
               orderInfo.status,
+              this.getActiveYear(),
               orderInfo.payment_status,
               orderInfo.payment_method,
               orderInfo.created_by
@@ -1048,13 +1157,14 @@ class SqliteDatabase {
               // Record transaction for purchase
               this.db.run(`
                 INSERT INTO transactions (
-                  transaction_type, date, amount, related_id, description, created_by
-                ) VALUES ('purchase', datetime('now'), ?, ?, ?, ?)
+                  transaction_type, date, amount, related_id, description, created_by, year
+                ) VALUES ('purchase', datetime('now'), ?, ?, ?, ?, ?)
               `, [
                 orderInfo.total,
                 orderId,
                 `Purchase from Vendor ID: ${orderInfo.vendor_id}`,
-                orderInfo.created_by
+                orderInfo.created_by,
+                this.getActiveYear()
               ], (err) => {
                 if (err) {
                   this.db.run('ROLLBACK');
@@ -1106,8 +1216,8 @@ class SqliteDatabase {
         try {
           // Check if inventory entry exists
           this.db.get(
-            'SELECT * FROM inventory WHERE product_id = ?', 
-            [productId],
+            'SELECT * FROM inventory WHERE product_id = ? AND year = ?', 
+            [productId, this.getActiveYear()],
             (err, existingInventory) => {
               if (err) {
                 this.db.run('ROLLBACK');
@@ -1143,9 +1253,9 @@ class SqliteDatabase {
                 // Create new inventory entry
                 newQuantity = quantity;
                 this.db.run(
-                  `INSERT INTO inventory (product_id, quantity, location, last_updated)
-                   VALUES (?, ?, ?, datetime('now'))`,
-                  [productId, newQuantity, location],
+                  `INSERT INTO inventory (product_id, quantity, location, last_updated, year)
+                   VALUES (?, ?, ?, datetime('now'), ?)`,
+                  [productId, newQuantity, location, this.getActiveYear()],
                   function(err) {
                     if (err) {
                       this.db.run('ROLLBACK');
@@ -1163,13 +1273,14 @@ class SqliteDatabase {
                 this.db.run(
                   `INSERT INTO transactions (
                     transaction_type, date, amount, related_id,
-                    description, created_by
+                    description, created_by, year
                   ) VALUES ('inventory', datetime('now'), 0, ?,
-                    ?, ?)`,
+                    ?, ?, ?)`,
                   [
                     productId,
                     `Product quantity updated from ${oldQuantity} to ${newQuantity}`,
-                    userId
+                    userId,
+                    this.getActiveYear()
                   ],
                   (err) => {
                     if (err) {
@@ -1224,10 +1335,10 @@ class SqliteDatabase {
         COUNT(*) as count,
         SUM(total) as total
       FROM orders
-      WHERE 1=1
+      WHERE year = ?
     `;
     
-    const params = [];
+    const params = [this.getActiveYear()];
     
     // Apply filters if provided
     if (filters.startDate) {
@@ -1270,10 +1381,11 @@ class SqliteDatabase {
           SUM(p.price * i.quantity) as value
         FROM products p
         JOIN inventory i ON p.id = i.product_id
+        WHERE p.year = ? AND i.year = ?
         GROUP BY p.category
       `;
       
-      const categorySummary = await this.query(sql);
+      const categorySummary = await this.query(sql, [this.getActiveYear(), this.getActiveYear()]);
       
       // For each category, get detailed items
       const report = [];
@@ -1285,10 +1397,10 @@ class SqliteDatabase {
             i.quantity, i.location
           FROM products p
           JOIN inventory i ON p.id = i.product_id
-          WHERE p.category = ?
+          WHERE p.category = ? AND p.year = ? AND i.year = ?
         `;
         
-        const items = await this.query(itemsSql, [category.category]);
+        const items = await this.query(itemsSql, [category.category, this.getActiveYear(), this.getActiveYear()]);
         
         report.push({
           ...category,
@@ -1314,7 +1426,7 @@ class SqliteDatabase {
   getEstimates() {
     return new Promise((resolve, reject) => {
       // Get all estimates
-      this.db.all(`SELECT * FROM estimates ORDER BY date DESC`, (err, estimates) => {
+      this.db.all(`SELECT * FROM estimates WHERE year = ? ORDER BY date DESC`, [this.getActiveYear()], (err, estimates) => {
         if (err) {
           reject(err);
           return;
@@ -1362,7 +1474,7 @@ class SqliteDatabase {
   getEstimateById(id) {
     return new Promise((resolve, reject) => {
       // Get the estimate
-      this.db.get(`SELECT * FROM estimates WHERE id = ?`, [id], (err, estimate) => {
+      this.db.get(`SELECT * FROM estimates WHERE id = ? AND year = ?`, [id, this.getActiveYear()], (err, estimate) => {
         if (err) {
           reject(err);
           return;
@@ -1437,6 +1549,7 @@ class SqliteDatabase {
       
       // Add current timestamp for created_at
       estimate.created_at = new Date().toISOString();
+      estimate.year = this.getActiveYear();
       
       // Create arrays for column names and placeholders
       const columns = Object.keys(estimate);
@@ -1537,7 +1650,7 @@ class SqliteDatabase {
           const setClauses = Object.keys(estimateUpdates).map(key => `${key} = ?`).join(', ');
           const values = [...Object.values(estimateUpdates), id];
           
-          this.db.run(`UPDATE estimates SET ${setClauses} WHERE id = ?`, values, err => {
+          this.db.run(`UPDATE estimates SET ${setClauses} WHERE id = ? AND year = ?`, [...values, this.getActiveYear()], err => {
             if (err) {
               this.db.run('ROLLBACK');
               reject(err);
@@ -1615,7 +1728,7 @@ class SqliteDatabase {
    */
   deleteEstimate(id) {
     return new Promise((resolve, reject) => {
-      this.db.run(`DELETE FROM estimates WHERE id = ?`, [id], err => {
+      this.db.run(`DELETE FROM estimates WHERE id = ? AND year = ?`, [id, this.getActiveYear()], err => {
         if (err) {
           reject(err);
           return;
@@ -1633,7 +1746,7 @@ class SqliteDatabase {
    */
   getEstimatesByStatus(status) {
     return new Promise((resolve, reject) => {
-      this.db.all(`SELECT * FROM estimates WHERE status = ? ORDER BY date DESC`, [status], (err, estimates) => {
+      this.db.all(`SELECT * FROM estimates WHERE status = ? AND year = ? ORDER BY date DESC`, [status, this.getActiveYear()], (err, estimates) => {
         if (err) {
           reject(err);
           return;

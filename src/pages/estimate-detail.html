@@ -396,6 +396,14 @@
               <td colspan="4" style="text-align: right; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">Total:</td>
               <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;" id="preview-total"></td>
             </tr>
+            <tr>
+              <td colspan="4" style="text-align: right; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">Advance Amount:</td>
+              <td style="text-align: left; border: 1px solid #000; padding: 8px; font-size: 22px;" id="preview-advance"></td>
+            </tr>
+            <tr>
+              <td colspan="4" style="text-align: right; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">Balance:</td>
+              <td style="text-align: left; border: 1px solid #000; padding: 8px; font-size: 22px;" id="preview-balance"></td>
+            </tr>
           </tfoot>
         </table>
         
@@ -492,6 +500,8 @@
           order_no: "ORD-001",
           status: "pending",
           total_amount: 2500,
+          advanceAmount: 0,
+          balanceAmount: 2500,
           products: [
             {
               productCode: "P001",
@@ -545,6 +555,19 @@
     
     // Store the current estimate data
     let currentEstimate = null;
+
+    function toNumber(value, fallback = 0) {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function getEstimateFinancials(estimate) {
+      const totalAmount = toNumber(estimate.total_amount ?? estimate.totalAmount ?? estimate.total);
+      const advanceAmount = toNumber(estimate.advanceAmount ?? estimate.advance_amount);
+      const computedBalance = totalAmount - advanceAmount;
+      const balanceAmount = toNumber(estimate.balanceAmount ?? estimate.balance_amount, computedBalance);
+      return { totalAmount, advanceAmount, balanceAmount };
+    }
     
     // Load estimate data
     async function loadEstimateDetail() {
@@ -566,20 +589,26 @@
       }
     }
     
-    // Render estimate details
+    // Render estimate details (supports both sales and vendor estimate structures)
     function renderEstimate(estimate) {
+      const estimateNo = estimate.estimate_no || estimate.id || '-';
+      const customerName = estimate.customer_name || estimate.customerName || '-';
+      const assignedAgent = estimate.assigned_agent || estimate.agentName || '-';
+      const products = estimate.products || estimate.items || [];
+      const { totalAmount, advanceAmount, balanceAmount } = getEstimateFinancials(estimate);
+
       // Update status values to use completed instead of packed for consistency
       const status = estimate.status === 'packed' ? 'completed' : estimate.status;
       const statusClass = status === 'completed' ? 'status-completed' : 'status-pending';
       const statusLabel = status === 'completed' ? 'Completed' : 'Pending';
-      
+
       const content = document.getElementById('estimate-content');
       content.innerHTML = `
         <div class="estimate-info">
           <div>
             <div class="info-group">
               <label>Estimate No.</label>
-              <span>${estimate.estimate_no}</span>
+              <span>${estimateNo}</span>
             </div>
             <div class="info-group">
               <label>Date</label>
@@ -587,17 +616,17 @@
             </div>
             <div class="info-group">
               <label>Order No.</label>
-              <span>${estimate.order_no || '-'}</span>
+              <span>${estimate.order_no || estimate.orderId || '-'}</span>
             </div>
           </div>
           <div>
             <div class="info-group">
               <label>Customer Name</label>
-              <span>${estimate.customer_name}</span>
+              <span>${customerName}</span>
             </div>
             <div class="info-group">
               <label>Assigned Agent</label>
-              <span>${estimate.assigned_agent}</span>
+              <span>${assignedAgent}</span>
             </div>
             <div class="info-group">
               <label>Status</label>
@@ -605,7 +634,7 @@
             </div>
           </div>
         </div>
-        
+
         <h3>Products</h3>
         <table class="products-table">
           <thead>
@@ -620,20 +649,30 @@
             </tr>
           </thead>
           <tbody>
-            ${estimate.products && estimate.products.map((product, index) => `
+            ${products.map((product) => {
+              const amount = product.amount ?? product.total ?? (product.quantity * product.rate);
+              return `
               <tr>
                 <td>${product.productCode || '-'}</td>
                 <td>${product.name || '-'}</td>
                 <td>${product.size || '-'}</td>
                 <td>${product.category || '-'}</td>
                 <td>${product.quantity}</td>
-                <td>$${product.rate.toFixed(2)}</td>
-                <td>$${product.amount.toFixed(2)}</td>
+                <td>₹${(product.rate || 0).toFixed(2)}</td>
+                <td>₹${amount.toFixed(2)}</td>
               </tr>
-            `).join('')}
+            `}).join('')}
             <tr class="total-row">
               <td colspan="6" style="text-align: right;"><strong>Total Amount:</strong></td>
-              <td>$${estimate.total_amount.toFixed(2)}</td>
+              <td>₹${totalAmount.toFixed(2)}</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="6" style="text-align: right;"><strong>Advance Amount:</strong></td>
+              <td>₹${advanceAmount.toFixed(2)}</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="6" style="text-align: right;"><strong>Balance:</strong></td>
+              <td style="color: ${balanceAmount > 0 ? '#dc3545' : '#28a745'};">₹${balanceAmount.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -713,31 +752,36 @@
     // Handle Print Estimate
     document.getElementById('print-estimate-btn').addEventListener('click', function() {
       if (!currentEstimate) return;
-      
+
+      const products = currentEstimate.products || currentEstimate.items || [];
+      const { totalAmount, advanceAmount, balanceAmount } = getEstimateFinancials(currentEstimate);
+
       // Populate the print preview
       document.getElementById('preview-date').textContent = formatDate(currentEstimate.date);
-      document.getElementById('preview-customer').textContent = currentEstimate.customer_name;
-      document.getElementById('preview-estimate-no').textContent = currentEstimate.estimate_no;
-      
+      document.getElementById('preview-customer').textContent = currentEstimate.customer_name || currentEstimate.customerName || '';
+      document.getElementById('preview-estimate-no').textContent = currentEstimate.estimate_no || currentEstimate.id || '';
+
       // Generate estimate items
       const itemsContainer = document.getElementById('preview-items');
       itemsContainer.innerHTML = '';
-      
-      currentEstimate.products.forEach((product, index) => {
+
+      products.forEach((product, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${index + 1}</td>
           <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${product.name}</td>
           <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${product.productCode}</td>
           <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${product.quantity}</td>
-          <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${product.rate.toFixed(2)}</td>
+          <td style="text-align: left; border: 1px solid #000; padding: 8px; font-weight: bold; font-size: 22px;">${(product.rate || 0).toFixed(2)}</td>
         `;
         itemsContainer.appendChild(row);
       });
-      
-      // Set total
-      document.getElementById('preview-total').textContent = currentEstimate.total_amount.toFixed(2);
-      
+
+      // Set total, advance and balance
+      document.getElementById('preview-total').textContent = totalAmount.toFixed(2);
+      document.getElementById('preview-advance').textContent = advanceAmount.toFixed(2);
+      document.getElementById('preview-balance').textContent = balanceAmount.toFixed(2);
+
       // Show the print preview modal
       document.getElementById('estimate-print-preview').style.display = 'flex';
     });

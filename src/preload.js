@@ -3,6 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   // Authentication
   login: (credentials) => ipcRenderer.invoke('login', credentials),
+  setActiveYear: (year) => ipcRenderer.invoke('set-active-year', year),
+  getActiveYear: () => ipcRenderer.invoke('get-active-year'),
   
   // User Management
   getUsers: () => ipcRenderer.invoke('get-users'),

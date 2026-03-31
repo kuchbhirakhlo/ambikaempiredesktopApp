@@ -78,8 +78,24 @@
       transition: 0.2s ease-in-out;
       background-color: #f8f9fa;
     }
+    
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: 0.2s ease-in-out;
+      background-color: #f8f9fa;
+    }
 
     .form-group input:focus {
+      border-color: #4a6cf7;
+      outline: none;
+      background-color: #fff;
+    }
+    
+    .form-group select:focus {
       border-color: #4a6cf7;
       outline: none;
       background-color: #fff;
@@ -156,6 +172,11 @@
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="Enter your password" required />
       </div>
+      
+      <div class="form-group">
+        <label for="year">Financial/Data Year</label>
+        <select id="year" required></select>
+      </div>
 
       <button type="submit" class="login-button">Login</button>
       <div id="error-message" class="error-message"></div>
@@ -164,6 +185,26 @@
 
   <script src="../utils/error-recovery.js"></script>
   <script>
+    function getYearOptions() {
+      const currentYear = new Date().getFullYear();
+      const startYear = 2020;
+      const years = [];
+      for (let year = currentYear + 1; year >= startYear; year--) {
+        years.push(year);
+      }
+      return years;
+    }
+
+    function initializeYearDropdown() {
+      const yearSelect = document.getElementById('year');
+      const currentYear = new Date().getFullYear();
+      const years = getYearOptions();
+
+      yearSelect.innerHTML = years
+        .map((year) => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`)
+        .join('');
+    }
+
     // Function to show error messages
     function showError(message) {
       const errorMessage = document.getElementById('error-message');
@@ -201,12 +242,20 @@
         recoverFormInputs();
       }
     })();
+    
+    initializeYearDropdown();
 
     document.getElementById('login-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
+      const selectedYear = parseInt(document.getElementById('year').value, 10);
+
+      if (!selectedYear || Number.isNaN(selectedYear)) {
+        showError('Please select a valid year');
+        return;
+      }
 
       try {
         let isValid = false;
@@ -216,7 +265,7 @@
         // Check if we can use the API (electron mode) or localStorage (browser mode)
         if (window.api && window.api.login) {
           // Electron mode with API
-          const result = await window.api.login({ username, password });
+          const result = await window.api.login({ username, password, year: selectedYear });
           
           if (result.success) {
             isValid = true;
@@ -236,7 +285,7 @@
               }
               
               isValid = true;
-              userData = { ...user };
+              userData = { ...user, selectedYear };
               delete userData.password;
               break;
             }
@@ -249,7 +298,12 @@
 
         if (isValid && userData) {
           // Store user data in session
-          sessionStorage.setItem('user', JSON.stringify(userData));
+          const sessionUser = {
+            ...userData,
+            selectedYear
+          };
+          sessionStorage.setItem('user', JSON.stringify(sessionUser));
+          sessionStorage.setItem('selectedYear', String(selectedYear));
           window.location.href = 'dashboard.html';
         } else {
           showError(errorMessage || 'Invalid username or password');
