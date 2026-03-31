@@ -47,11 +47,10 @@ class SqliteDatabase {
         // Enable foreign keys
         this.db.run('PRAGMA foreign_keys = ON');
         
-        // Initialize database schema and sample data
-        this.initializeDatabase();
-        
-        // Ensure required tables exist
-        this.ensureTablesExist();
+        // Initialize database schema and sample data, then ensure tables exist
+        this.initializeDatabase(() => {
+          this.ensureTablesExist();
+        });
       }
     });
   }
@@ -72,11 +71,12 @@ class SqliteDatabase {
   /**
    * Initialize the database schema and sample data if needed
    */
-  initializeDatabase() {
+  initializeDatabase(callback) {
     // Check if the database is already initialized
     this.db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="settings"', (err, result) => {
       if (err) {
         console.error('Error checking database initialization:', err);
+        if (callback) callback();
         return;
       }
       
@@ -384,7 +384,17 @@ class SqliteDatabase {
             INSERT INTO settings (key, value)
             VALUES ('initialized', 'true')
           `);
+          
+          // Call callback after all setup is complete
+          if (callback) {
+            setTimeout(callback, 100);
+          }
         });
+      } else {
+        // Database already initialized
+        if (callback) {
+          callback();
+        }
       }
     });
   }
@@ -392,235 +402,177 @@ class SqliteDatabase {
   /**
    * Ensure all required tables exist, even for existing databases
    */
-  ensureTablesExist() {
-    this.ensureYearColumns();
-
-    // Check for estimates table
-    this.db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="estimates"', (err, result) => {
-      if (err) {
-        console.error('Error checking for estimates table:', err);
-        return;
-      }
-      
-      // If estimates table doesn't exist, create it
-      if (!result) {
-        console.log('Creating missing estimates tables');
-        
-        // Just create the tables - don't worry about sample data now
-        this.db.run(`
-          CREATE TABLE IF NOT EXISTS estimates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            estimate_no TEXT UNIQUE NOT NULL,
-            date TEXT NOT NULL,
-            order_no TEXT,
-            customer_name TEXT NOT NULL,
-            assigned_agent TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending',
-            total_amount REAL NOT NULL DEFAULT 0,
-            created_by INTEGER NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT,
-            FOREIGN KEY (created_by) REFERENCES users(id)
-          )
-        `);
-        
-        this.db.run(`
-          CREATE TABLE IF NOT EXISTS estimate_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            estimate_id INTEGER NOT NULL,
-            product_id INTEGER NOT NULL,
-            quantity INTEGER NOT NULL DEFAULT 1,
-            rate REAL NOT NULL,
-            amount REAL NOT NULL,
-            FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE CASCADE,
-            FOREIGN KEY (product_id) REFERENCES products(id)
-          )
-        `);
-      }
-    });
+  ensureTablesExist(callback) {
+    const tablesToCheck = [
+      'estimates', 'customers', 'agents', 'products', 'inventory', 
+      'orders', 'transactions', 'users', 'vendors'
+    ];
     
-    // Check for customers table
-    this.db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="customers"', (err, result) => {
-      if (err) {
-        console.error('Error checking for customers table:', err);
-        return;
-      }
-      
-      // If customers table doesn't exist, create it
-      if (!result) {
-        console.log('Creating missing customers table');
-        
-        this.db.run(`
-          CREATE TABLE IF NOT EXISTS customers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            contact TEXT,
-            email TEXT,
-            agent TEXT,
-            address TEXT,
-            customer_ref_id TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT
-          )
-        `, (err) => {
-          if (err) {
-            console.error('Error creating customers table:', err);
-            return;
-          }
-          
-          // Add sample customer data only after table is created
-          this.db.run(`
-            INSERT INTO customers (name, contact, email, agent, address)
-            VALUES 
-              ('John Smith', '+1 234 567 890', 'john.smith@example.com', 'Michael Johnson', '123 Main St, New York'),
-              ('Sarah Williams', '+1 345 678 901', 'sarah.williams@example.com', 'David Brown', '456 Oak Ave, Los Angeles'),
-              ('Robert Davis', '+1 456 789 012', 'robert.davis@example.com', 'Emily Wilson', '789 Pine St, Chicago')
-          `, (err) => {
-            if (err) {
-              console.error('Error inserting sample customers:', err);
-            } else {
-              console.log('Sample customers added successfully');
-            }
-          });
-        });
-      }
-    });
-    
-    // Check for agents table
-    this.db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="agents"', (err, result) => {
-      if (err) {
-        console.error('Error checking for agents table:', err);
-        return;
-      }
-      
-      // If agents table doesn't exist, create it
-      if (!result) {
-        console.log('Creating missing agents table');
-        
-        this.db.run(`
-          CREATE TABLE IF NOT EXISTS agents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            contact TEXT,
-            email TEXT,
-            city TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT
-          )
-        `, (err) => {
-          if (err) {
-            console.error('Error creating agents table:', err);
-            return;
-          }
-          
-          // Add sample agent data only after table is created
-          this.db.run(`
-            INSERT INTO agents (name, contact, email, city)
-            VALUES 
-              ('Michael Johnson', '+1 234 567 890', 'michael@example.com', 'New York'),
-              ('David Brown', '+1 345 678 901', 'david@example.com', 'Los Angeles'),
-              ('Emily Wilson', '+1 456 789 012', 'emily@example.com', 'Chicago')
-          `, (err) => {
-            if (err) {
-              console.error('Error inserting sample agents:', err);
-            } else {
-              console.log('Sample agents added successfully');
-            }
-          });
-        });
-      }
-    });
+    let completed = 0;
+    const existingTables = new Set();
 
-    // Check and update schema if needed
-    this.db.get("PRAGMA table_info(users)", (err, rows) => {
-      if (err) {
-        console.error('Error checking users table schema:', err);
-        return;
-      }
-
-      // Check if status column exists in users table
-      this.db.all("PRAGMA table_info(users)", (err, columns) => {
-        if (err) {
-          console.error('Error checking users table columns:', err);
-          return;
+    // First, check which tables actually exist
+    tablesToCheck.forEach((table) => {
+      this.db.get(`SELECT name FROM sqlite_master WHERE type="table" AND name="${table}"`, (err, result) => {
+        if (result) {
+          existingTables.add(table);
         }
-
-        const hasStatusColumn = columns.some(column => column.name === 'status');
+        completed++;
         
-        if (!hasStatusColumn) {
-          console.log('Adding status column to users table');
-          this.db.run("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'", (err) => {
-            if (err) {
-              console.error('Error adding status column to users table:', err);
-            } else {
-              console.log('Successfully added status column to users table');
-              
-              // Update all existing users to have 'active' status
-              this.db.run("UPDATE users SET status = 'active' WHERE status IS NULL", (err) => {
+        if (completed === tablesToCheck.length) {
+          // All checks done, now call ensureYearColumns
+          this.ensureYearColumns(() => {
+            // Process estimates table
+            if (existingTables.has('estimates')) {
+              this.db.run(`CREATE TABLE IF NOT EXISTS estimates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                estimate_no TEXT UNIQUE NOT NULL,
+                date TEXT NOT NULL,
+                order_no TEXT,
+                customer_name TEXT NOT NULL,
+                assigned_agent TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                total_amount REAL NOT NULL DEFAULT 0,
+                created_by INTEGER NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT,
+                FOREIGN KEY (created_by) REFERENCES users(id)
+              )`);
+
+              this.db.run(`CREATE TABLE IF NOT EXISTS estimate_products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                estimate_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                quantity INTEGER NOT NULL DEFAULT 1,
+                rate REAL NOT NULL,
+                amount REAL NOT NULL,
+                FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id)
+              )`);
+            }
+            
+            // Process customers table
+            if (existingTables.has('customers')) {
+              this.db.run(`CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                contact TEXT,
+                email TEXT,
+                agent TEXT,
+                address TEXT,
+                customer_ref_id TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT
+              )`, (err) => {
                 if (err) {
-                  console.error('Error updating existing users status:', err);
+                  console.error('Error with customers table:', err);
+                  return;
+                }
+                
+                this.db.all('PRAGMA table_info(customers)', (err, columns) => {
+                  if (err) return;
+                  const hasCustomerRefId = columns ? columns.some(col => col.name === 'customer_ref_id') : false;
+                  if (!hasCustomerRefId) {
+                    this.db.run('ALTER TABLE customers ADD COLUMN customer_ref_id TEXT;', (err) => {
+                      if (err) {
+                        console.error('Error adding customer_ref_id column:', err);
+                      } else {
+                        console.log('Successfully added customer_ref_id column to customers table');
+                      }
+                    });
+                  }
+                });
+              });
+            } else {
+              // Create customers table if it doesn't exist
+              this.db.run(`CREATE TABLE customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                contact TEXT,
+                email TEXT,
+                agent TEXT,
+                address TEXT,
+                customer_ref_id TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT
+              )`);
+              
+              this.db.run(`INSERT INTO customers (name, contact, email, agent, address)
+                VALUES 
+                  ('John Smith', '+1 234 567 890', 'john.smith@example.com', 'Michael Johnson', '123 Main St, New York'),
+                  ('Sarah Williams', '+1 345 678 901', 'sarah.williams@example.com', 'David Brown', '456 Oak Ave, Los Angeles'),
+                  ('Robert Davis', '+1 456 789 012', 'robert.davis@example.com', 'Emily Wilson', '789 Pine St, Chicago')`);
+            }
+            
+            // Process agents table
+            if (existingTables.has('agents')) {
+              // Agents table exists, nothing to do
+            } else {
+              this.db.run(`CREATE TABLE agents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                contact TEXT,
+                email TEXT,
+                city TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT
+              )`);
+              
+              this.db.run(`INSERT INTO agents (name, contact, email, city)
+                VALUES 
+                  ('Michael Johnson', '+1 234 567 890', 'michael@example.com', 'New York'),
+                  ('David Brown', '+1 345 678 901', 'david@example.com', 'Los Angeles'),
+                  ('Emily Wilson', '+1 456 789 012', 'emily@example.com', 'Chicago')`);
+            }
+
+            // Process users table
+            if (existingTables.has('users')) {
+              this.db.all("PRAGMA table_info(users)", (err, columns) => {
+                if (err) {
+                  console.error('Error checking users table schema:', err);
+                  return;
+                }
+
+                const hasStatusColumn = columns.some(column => column.name === 'status');
+                
+                if (!hasStatusColumn) {
+                  console.log('Adding status column to users table');
+                  this.db.run("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'", (err) => {
+                    if (err) {
+                      console.error('Error adding status column to users table:', err);
+                    } else {
+                      console.log('Successfully added status column to users table');
+                      this.db.run("UPDATE users SET status = 'active' WHERE status IS NULL");
+                    }
+                  });
                 } else {
-                  console.log('Successfully updated existing users status to active');
+                  this.db.run("UPDATE users SET status = 'active' WHERE status IS NULL");
                 }
               });
             }
-          });
-        } else {
-          // Make sure all users have a status, even if the column exists
-          this.db.run("UPDATE users SET status = 'active' WHERE status IS NULL", (err) => {
-            if (err) {
-              console.error('Error updating users with missing status:', err);
-            } else {
-              console.log('Ensured all users have status values');
+
+            // Process products table
+            if (existingTables.has('products')) {
+              this.db.all("PRAGMA table_info(products)", (err, columns) => {
+                if (err) return;
+                const hasSupplierId = columns.some(column => column.name === 'supplierId');
+                if (!hasSupplierId) {
+                  this.db.run(`ALTER TABLE products ADD COLUMN supplierId INTEGER REFERENCES vendors(id)`);
+                }
+              });
+            }
+
+            // If callback provided, call it after a short delay to allow async operations
+            if (callback) {
+              setTimeout(callback, 100);
             }
           });
         }
       });
     });
-    
-    // Check for customer_ref_id column in customers table and add if missing
-    this.db.all('PRAGMA table_info(customers)', (err, columns) => {
-      if (err) {
-        console.error('Error checking customers table schema:', err);
-        return;
-      }
-      
-      // Check if customer_ref_id column exists
-      const hasCustomerRefId = columns ? columns.some(col => col.name === 'customer_ref_id') : false;
-      
-      if (!hasCustomerRefId) {
-        console.log('Adding customer_ref_id column to customers table');
-        
-        // Add the customer_ref_id column
-        this.db.run('ALTER TABLE customers ADD COLUMN customer_ref_id TEXT;', (err) => {
-          if (err) {
-            console.error('Error adding customer_ref_id column:', err);
-          } else {
-            console.log('Successfully added customer_ref_id column to customers table');
-          }
-        });
-      }
-    });
-
-    // Check for supplierId column in products table
-    this.db.all("PRAGMA table_info(products)", (err, columns) => {
-      if (err) {
-        console.error('Error checking products table columns:', err);
-        return;
-      }
-
-      const hasSupplierId = columns.some(column => column.name === 'supplierId');
-      if (!hasSupplierId) {
-        console.log('Adding supplierId column to products table');
-        this.db.run(`
-          ALTER TABLE products
-          ADD COLUMN supplierId INTEGER REFERENCES vendors(id)
-        `);
-      }
-    });
   }
 
-  ensureYearColumns() {
+  ensureYearColumns(callback) {
     const tableYearConfig = {
       customers: 'created_at',
       agents: 'created_at',
@@ -631,39 +583,72 @@ class SqliteDatabase {
       estimates: 'date'
     };
 
-    Object.entries(tableYearConfig).forEach(([table, sourceColumn]) => {
-      this.db.all(`PRAGMA table_info(${table})`, (err, columns) => {
-        if (err || !columns) {
-          if (err) {
-            console.error(`Error checking ${table} schema:`, err);
+    const tables = Object.keys(tableYearConfig);
+    let completed = 0;
+
+    tables.forEach((table) => {
+      // First check if table exists
+      this.db.get(`SELECT name FROM sqlite_master WHERE type="table" AND name="${table}"`, (err, result) => {
+        if (err || !result) {
+          console.log(`Table ${table} does not exist, skipping year column addition`);
+          completed++;
+          if (callback && completed === tables.length) {
+            callback();
           }
           return;
         }
 
-        const hasYearColumn = columns.some(col => col.name === 'year');
-        if (hasYearColumn) {
-          return;
-        }
-
-        console.log(`Adding year column to ${table} table`);
-        this.db.run(`ALTER TABLE ${table} ADD COLUMN year INTEGER`, (alterErr) => {
-          if (alterErr) {
-            console.error(`Error adding year column to ${table}:`, alterErr);
+        // Table exists, now check if year column exists
+        this.db.all(`PRAGMA table_info(${table})`, (err, columns) => {
+          if (err || !columns) {
+            console.error(`Error checking ${table} schema:`, err);
+            completed++;
+            if (callback && completed === tables.length) {
+              callback();
+            }
             return;
           }
 
-          const fallbackYear = new Date().getFullYear();
-          this.db.run(
-            `UPDATE ${table}
-             SET year = COALESCE(CAST(strftime('%Y', ${sourceColumn}) AS INTEGER), ?)
-             WHERE year IS NULL`,
-            [fallbackYear],
-            (updateErr) => {
-              if (updateErr) {
-                console.error(`Error backfilling year values for ${table}:`, updateErr);
-              }
+          const hasYearColumn = columns.some(col => col.name === 'year');
+          if (hasYearColumn) {
+            console.log(`Year column already exists in ${table}`);
+            completed++;
+            if (callback && completed === tables.length) {
+              callback();
             }
-          );
+            return;
+          }
+
+          console.log(`Adding year column to ${table} table`);
+          this.db.run(`ALTER TABLE ${table} ADD COLUMN year INTEGER`, (alterErr) => {
+            if (alterErr) {
+              console.error(`Error adding year column to ${table}:`, alterErr);
+              completed++;
+              if (callback && completed === tables.length) {
+                callback();
+              }
+              return;
+            }
+
+            const fallbackYear = new Date().getFullYear();
+            this.db.run(
+              `UPDATE ${table}
+               SET year = COALESCE(CAST(strftime('%Y', ${tableYearConfig[table]}) AS INTEGER), ?)
+               WHERE year IS NULL`,
+              [fallbackYear],
+              (updateErr) => {
+                if (updateErr) {
+                  console.error(`Error backfilling year values for ${table}:`, updateErr);
+                } else {
+                  console.log(`Successfully added year column to ${table}`);
+                }
+                completed++;
+                if (callback && completed === tables.length) {
+                  callback();
+                }
+              }
+            );
+          });
         });
       });
     });

@@ -863,6 +863,8 @@
     
     // Initialize the page when loaded
     document.addEventListener('DOMContentLoaded', async function() {
+      // Ensure the active year is set in the database
+      await ensureActiveYear();
       // Get current user
       try {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -974,6 +976,15 @@
     let selectedEstimateIndex = null;
     let productInventory = {}; // Will be populated from API
     let products = []; // Will be populated from API
+
+    // Function to ensure the active year is set in the database
+    async function ensureActiveYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
     
     // Function to load products and inventory data
     async function loadProductsAndInventory() {

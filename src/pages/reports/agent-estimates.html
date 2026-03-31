@@ -340,6 +340,15 @@
       window.location.href = '../login.html';
     }
 
+    // Ensure the active year is set in the database before making API calls
+    async function initializeYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
+
     // Initialize variables
     let allEstimates = [];
     let filteredEstimates = [];
@@ -870,12 +879,15 @@
 
     // Initialize the page
     document.addEventListener('DOMContentLoaded', () => {
-      // Load estimates data
-      loadEstimates().catch(err => {
-        console.error('Error initializing page:', err);
-        document.getElementById('agent-sections-container').innerHTML = `
-          <div class="no-data">Error loading data. Please try again.</div>
-        `;
+      // Ensure the active year is set before loading data
+      initializeYear().then(() => {
+        // Load estimates data
+        loadEstimates().catch(err => {
+          console.error('Error initializing page:', err);
+          document.getElementById('agent-sections-container').innerHTML = `
+            <div class="no-data">Error loading data. Please try again.</div>
+          `;
+        });
       });
 
       // Set up event listeners

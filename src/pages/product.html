@@ -423,6 +423,11 @@
     const isAdmin = user.role === 'admin';
     const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
 
+    // Ensure the active year is set in the database before making API calls
+    if (window.api && window.api.setActiveYear) {
+      await window.api.setActiveYear(selectedYear);
+    }
+
     // Products array to store loaded products
     let products = [];
     let suppliers = [];

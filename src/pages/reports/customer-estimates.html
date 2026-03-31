@@ -243,12 +243,22 @@
       window.location.href = '../login.html';
     }
 
+    // Ensure the active year is set in the database before making API calls
+    async function initializeYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
+
     let productList = [];
     let refreshIntervalId = null;
 
-    // Build list from live DB-backed APIs:
-    // Product Code, Product Name, Price, Purchased Qty (from inventory-page adds), Sold Qty (from sales-driven stock deductions), In Stock (from inventory)
+    // Initialize year before building the list
     async function buildProductList() {
+      await initializeYear();
+      
       const [products, inventory, transactions] = await Promise.all([
         window.api.getProducts(),
         window.api.getInventory(),
@@ -386,7 +396,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      loadData();
+      // Ensure the active year is set before loading data
+      initializeYear().then(() => {
+        loadData();
+      });
+      
       document.getElementById('refresh-btn').addEventListener('click', () => {
         document.getElementById('inventory-table').innerHTML = `
           <tr>

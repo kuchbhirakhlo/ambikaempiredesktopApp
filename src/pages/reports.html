@@ -108,6 +108,18 @@
       window.location.href = 'login.html';
     }
 
+    // Ensure the active year is set in the database
+    async function initializeYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
+
+    // Initialize on page load
+    initializeYear();
+
     // Add submenu toggle functionality
     document.addEventListener('DOMContentLoaded', () => {
       const reportsMenu = document.querySelector('.has-submenu');

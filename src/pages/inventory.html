@@ -305,8 +305,18 @@
     const user = JSON.parse(userString);
     let inventory = [];
 
+    // Ensure the active year is set in the database before making API calls
+    async function initializeYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
+
     // Initialize the page when loaded
     document.addEventListener('DOMContentLoaded', async function () {
+      const selectedYear = await initializeYear();
       try {
         // Populate year filter dropdown dynamically
         const yearSelect = document.getElementById('year-filter');

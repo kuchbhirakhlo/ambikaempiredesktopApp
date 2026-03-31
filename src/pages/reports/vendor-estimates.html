@@ -249,6 +249,15 @@
       window.location.href = '../../pages/login.html';
     }
 
+    // Ensure the active year is set in the database before making API calls
+    async function initializeYear() {
+      const selectedYear = parseInt(sessionStorage.getItem('selectedYear') || new Date().getFullYear(), 10);
+      if (window.api && window.api.setActiveYear) {
+        await window.api.setActiveYear(selectedYear);
+      }
+      return selectedYear;
+    }
+
     // Sample data - In a real app, this would come from your backend
     const estimates = [
       {
@@ -300,7 +309,10 @@
 
     // Initialize the page
     document.addEventListener('DOMContentLoaded', () => {
-      renderEstimates(estimates);
+      // Ensure the active year is set before loading data
+      initializeYear().then(() => {
+        renderEstimates(estimates);
+      });
 
       // Populate vendor dropdown with sample data
       const vendorSelect = document.getElementById('vendor');
