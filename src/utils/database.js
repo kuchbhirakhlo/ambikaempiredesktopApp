@@ -29,8 +29,6 @@ class SqliteDatabase {
   constructor() {
     this.activeYear = new Date().getFullYear();
     this.yearScopedTables = new Set([
-      'customers',
-      'agents',
       'products',
       'inventory',
       'orders',
@@ -574,8 +572,6 @@ class SqliteDatabase {
 
   ensureYearColumns(callback) {
     const tableYearConfig = {
-      customers: 'created_at',
-      agents: 'created_at',
       products: 'created_at',
       inventory: 'last_updated',
       orders: 'date',
