@@ -33,7 +33,7 @@ class MongoDBSync {
     };
     
     // Track connection state
-    this.isOffline = true // Set to true to force offline mode;
+    this.isOffline = false;
   }
 
   /**
@@ -142,29 +142,54 @@ class MongoDBSync {
    * Pushes local changes to the cloud
    */
   async syncToMongoDB() {
-    // Skip if sync is disabled or we're in offline mode
     if (!this.syncEnabled || this.isOffline) {
       return { success: false, message: 'Sync is disabled or offline mode detected' };
     }
     
     try {
-      // Connect to MongoDB
       const connected = await this.connect();
       if (!connected) {
         return { success: false, message: 'Failed to connect to MongoDB' };
       }
       
-      // Start sync process
-      // Logic to sync data from SQLite to MongoDB...
+      const results = {};
+      const localDb = require('./database');
       
-      // Update last sync date
+      for (const table of this.tables) {
+        try {
+          const records = await localDb.getAll(table);
+          
+          if (records.length > 0) {
+            const collection = this.db.collection(table);
+            
+            await collection.deleteMany({});
+            
+            const recordsToInsert = records.map(record => {
+              const { year, ...recordWithoutYear } = record;
+              return recordWithoutYear;
+            });
+            
+            await collection.insertMany(recordsToInsert);
+          }
+          
+          results[table] = { count: records.length, success: true };
+        } catch (err) {
+          console.error(`Error syncing table ${table}:`, err);
+          results[table] = { count: 0, success: false, error: err.message };
+        }
+      }
+      
       this.lastSyncDate = new Date().toISOString();
       this.settings.set('mongodb.lastSyncDate', this.lastSyncDate);
       
-      // Disconnect after sync
       await this.disconnect();
       
-      return { success: true, message: 'Sync completed successfully' };
+      return { 
+        success: true, 
+        message: 'Data uploaded to cloud successfully',
+        results,
+        timestamp: this.lastSyncDate
+      };
     } catch (error) {
       console.error('Error syncing to MongoDB:', error);
       return { success: false, message: `Sync failed: ${error.message}`, error };
@@ -176,31 +201,55 @@ class MongoDBSync {
    * Pulls changes from the cloud to local database
    */
   async syncFromMongoDB() {
-    // Skip if sync is disabled or we're in offline mode
     if (!this.syncEnabled || this.isOffline) {
       return { success: false, message: 'Sync is disabled or offline mode detected' };
     }
     
     try {
-      // Connect to MongoDB
       const connected = await this.connect();
       if (!connected) {
         return { success: false, message: 'Failed to connect to MongoDB' };
       }
       
-      // Start sync process
-      // Logic to sync data from MongoDB to SQLite...
+      const results = {};
+      const localDb = require('./database');
       
-      // Remove MongoDB _id field
+      for (const table of this.tables) {
+        try {
+          const collection = this.db.collection(table);
+          const mongoRecords = await collection.find({}).toArray();
+          
+          if (mongoRecords.length > 0) {
+            await localDb.exec(`DELETE FROM ${table}`);
+            
+            for (const record of mongoRecords) {
+              const { _id, ...recordData } = record;
+              try {
+                await localDb.add(table, recordData);
+              } catch (addErr) {
+                console.error(`Error adding record to ${table}:`, addErr);
+              }
+            }
+          }
+          
+          results[table] = { count: mongoRecords.length, success: true };
+        } catch (err) {
+          console.error(`Error syncing table ${table}:`, err);
+          results[table] = { count: 0, success: false, error: err.message };
+        }
+      }
       
-      // Update last sync date
       this.lastSyncDate = new Date().toISOString();
       this.settings.set('mongodb.lastSyncDate', this.lastSyncDate);
       
-      // Disconnect after sync
       await this.disconnect();
       
-      return { success: true, message: 'Sync completed successfully' };
+      return { 
+        success: true, 
+        message: 'Data downloaded from cloud successfully',
+        results,
+        timestamp: this.lastSyncDate
+      };
     } catch (error) {
       console.error('Error syncing from MongoDB:', error);
       return { success: false, message: `Sync failed: ${error.message}`, error };
