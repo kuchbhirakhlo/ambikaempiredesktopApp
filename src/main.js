@@ -511,24 +511,13 @@ ipcMain.handle('test-mongodb-connection', async () => {
 
 ipcMain.handle('sync-to-mongodb', async () => {
   try {
-    // Only attempt sync if MongoDB connection is available
-    if (mongoSync.isOffline) {
-      return { 
-        success: false, 
-        message: 'Sync skipped - application is in offline mode',
-        offline: true
-      };
-    }
-    
     const result = await mongoSync.syncToMongoDB();
     return result;
   } catch (error) {
     console.error('Error during sync to MongoDB:', error);
-    mongoSync.isOffline = true; // Set offline mode
     return { 
       success: false, 
       message: `Sync failed: ${error.message}`,
-      offline: true,
       error: error
     };
   }
@@ -536,23 +525,17 @@ ipcMain.handle('sync-to-mongodb', async () => {
 
 ipcMain.handle('sync-from-mongodb', async () => {
   try {
-    // Only attempt sync if MongoDB connection is available
-    if (mongoSync.isOffline) {
-      return { 
-        success: false, 
-        message: 'Sync skipped - application is in offline mode',
-        offline: true
-      };
-    }
-    
     const result = await mongoSync.syncFromMongoDB();
     return result;
   } catch (error) {
     console.error('Error during sync from MongoDB:', error);
-    mongoSync.isOffline = true; // Set offline mode
     return { 
       success: false, 
       message: `Sync failed: ${error.message}`,
+      error: error
+    };
+  }
+});
       offline: true,
       error: error
     };

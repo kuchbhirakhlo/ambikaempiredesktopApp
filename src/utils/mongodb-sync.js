@@ -35,57 +35,22 @@ class MongoDBSync {
     // Track connection state
     this.isOffline = false;
   }
-
-  /**
-   * Get sync status
-   */
-  getSyncStatus() {
-    return {
-      lastSyncDate: this.lastSyncDate,
-      syncEnabled: this.syncEnabled
-    };
-  }
-
-  /**
-   * Toggle sync enabled state
-   * @param {boolean} enabled - Whether sync is enabled
-   */
-  toggleSync(enabled) {
-    this.syncEnabled = enabled;
-    this.settings.set('mongodb.syncEnabled', this.syncEnabled);
-    return this.syncEnabled;
-  }
-
-  /**
-   * Set sync enabled state
-   * @param {boolean} enabled - Whether sync is enabled
-   */
-  setSyncEnabled(enabled) {
-    return this.toggleSync(enabled);
-  }
-
-  /**
-   * Test connection to MongoDB
-   */
+  
   async testConnection() {
     try {
       if (!this.connectionUrl) {
-        throw new Error('MongoDB connection URL is not configured in the server');
+        throw new Error('MongoDB connection URL is not configured');
       }
       
       const client = new MongoClient(this.connectionUrl, this.options);
       await client.connect();
       await client.close();
       
-      // Reset offline flag on successful connection
       this.isOffline = false;
       
       return { success: true, message: 'Connection successful' };
     } catch (error) {
       console.error('MongoDB connection test failed:', error);
-      
-      // Set offline flag
-      this.isOffline = true;
       
       return { success: false, message: `Connection failed: ${error.message}`, error };
     }
@@ -96,13 +61,8 @@ class MongoDBSync {
    */
   async connect() {
     try {
-      // Skip connection if we're offline
-      if (this.isOffline) {
-        return false;
-      }
-      
       if (!this.connectionUrl) {
-        throw new Error('MongoDB connection URL is not configured in the server');
+        throw new Error('MongoDB connection URL is not configured');
       }
       
       if (!this.client) {
@@ -114,7 +74,6 @@ class MongoDBSync {
       return true;
     } catch (error) {
       console.error('Failed to connect to MongoDB:', error);
-      this.isOffline = true;
       return false;
     }
   }
@@ -142,14 +101,14 @@ class MongoDBSync {
    * Pushes local changes to the cloud
    */
   async syncToMongoDB() {
-    if (!this.syncEnabled || this.isOffline) {
-      return { success: false, message: 'Sync is disabled or offline mode detected' };
+    if (!this.syncEnabled) {
+      return { success: false, message: 'Sync is disabled' };
     }
     
     try {
       const connected = await this.connect();
       if (!connected) {
-        return { success: false, message: 'Failed to connect to MongoDB' };
+        return { success: false, message: 'Failed to connect to MongoDB. Please check your connection.' };
       }
       
       const results = {};
@@ -198,17 +157,17 @@ class MongoDBSync {
 
   /**
    * Sync data from MongoDB to local SQLite
-   * Pulls changes from the cloud to local database
-   */
+* Pulls changes from the cloud to local database
+    */
   async syncFromMongoDB() {
-    if (!this.syncEnabled || this.isOffline) {
-      return { success: false, message: 'Sync is disabled or offline mode detected' };
+    if (!this.syncEnabled) {
+      return { success: false, message: 'Sync is disabled' };
     }
     
     try {
       const connected = await this.connect();
       if (!connected) {
-        return { success: false, message: 'Failed to connect to MongoDB' };
+        return { success: false, message: 'Failed to connect to MongoDB. Please check your connection.' };
       }
       
       const results = {};
