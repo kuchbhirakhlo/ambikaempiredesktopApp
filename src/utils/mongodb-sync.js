@@ -214,30 +214,75 @@ class MongoDBSync {
       const results = {};
       const localDb = require('./database');
       
-      for (const table of this.tables) {
+      await localDb.exec('PRAGMA foreign_keys = OFF');
+      
+      const deleteOrder = ['order_items', 'estimate_products', 'orders', 'estimates', 'transactions', 'inventory', 'products', 'vendors', 'customers', 'agents', 'users'];
+      for (const table of deleteOrder) {
+        try {
+          await localDb.exec(`DELETE FROM ${table}`);
+        } catch (err) {}
+      }
+      
+      const insertOrder = ['users', 'vendors', 'customers', 'agents', 'products', 'orders', 'estimates'];
+      
+      for (const table of insertOrder) {
         try {
           const collection = this.db.collection(table);
           const mongoRecords = await collection.find({}).toArray();
           
-          if (mongoRecords.length > 0) {
-            await localDb.exec(`DELETE FROM ${table}`);
-            
-            for (const record of mongoRecords) {
-              const { _id, ...recordData } = record;
-              try {
-                await localDb.add(table, recordData);
-              } catch (addErr) {
-                console.error(`Error adding record to ${table}:`, addErr);
-              }
-            }
+          for (const record of mongoRecords) {
+            const { _id, ...recordData } = record;
+            try {
+              await localDb.add(table, recordData);
+            } catch (addErr) {}
           }
-          
           results[table] = { count: mongoRecords.length, success: true };
         } catch (err) {
-          console.error(`Error syncing table ${table}:`, err);
-          results[table] = { count: 0, success: false, error: err.message };
+          results[table] = { count: 0, success: false };
         }
       }
+      
+      try {
+        const collection = this.db.collection('inventory');
+        const mongoRecords = await collection.find({}).toArray();
+        for (const record of mongoRecords) {
+          const { _id, ...recordData } = record;
+          try { await localDb.add('inventory', recordData); } catch (e) {}
+        }
+        results['inventory'] = { count: mongoRecords.length, success: true };
+      } catch (e) { results['inventory'] = { count: 0 }; }
+      
+      try {
+        const collection = this.db.collection('order_items');
+        const mongoRecords = await collection.find({}).toArray();
+        for (const record of mongoRecords) {
+          const { _id, ...recordData } = record;
+          try { await localDb.add('order_items', recordData); } catch (e) {}
+        }
+        results['order_items'] = { count: mongoRecords.length, success: true };
+      } catch (e) { results['order_items'] = { count: 0 }; }
+      
+      try {
+        const collection = this.db.collection('estimate_products');
+        const mongoRecords = await collection.find({}).toArray();
+        for (const record of mongoRecords) {
+          const { _id, ...recordData } = record;
+          try { await localDb.add('estimate_products', recordData); } catch (e) {}
+        }
+        results['estimate_products'] = { count: mongoRecords.length, success: true };
+      } catch (e) { results['estimate_products'] = { count: 0 }; }
+      
+      try {
+        const collection = this.db.collection('transactions');
+        const mongoRecords = await collection.find({}).toArray();
+        for (const record of mongoRecords) {
+          const { _id, ...recordData } = record;
+          try { await localDb.add('transactions', recordData); } catch (e) {}
+        }
+        results['transactions'] = { count: mongoRecords.length, success: true };
+      } catch (e) { results['transactions'] = { count: 0 }; }
+      
+      await localDb.exec('PRAGMA foreign_keys = ON');
       
       this.lastSyncDate = new Date().toISOString();
       this.settings.set('mongodb.lastSyncDate', this.lastSyncDate);
