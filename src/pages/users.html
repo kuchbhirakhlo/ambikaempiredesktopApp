@@ -321,157 +321,7 @@
   <script src="../components/Navbar.js"></script>
   <script src="../utils/error-recovery.js"></script>
   <script>
-    // Browser compatibility layer for window.api
-    if (!window.api) {
-      console.log('Running in browser mode - using localStorage API fallback');
-      
-      // Global error handler for API operations
-      function handleApiError(operation, error) {
-        console.error(`Error during ${operation}:`, error);
-        alert(`An error occurred while ${operation}. Error: ${error.message || error}`);
-        
-        // Ensure the UI remains responsive by removing any potential event listeners
-        // that might be blocking input fields
-        setTimeout(() => {
-          const inputFields = document.querySelectorAll('input, select, textarea');
-          inputFields.forEach(field => {
-            // Clone and replace the element to remove any stuck event handlers
-            const newField = field.cloneNode(true);
-            if (field.value) newField.value = field.value;
-            field.parentNode.replaceChild(newField, field);
-          });
-        }, 100);
-      }
-      
-      window.api = {
-        getUsers: async () => {
-          try {
-            const usersJson = localStorage.getItem('users');
-            if (!usersJson) return [];
-            return JSON.parse(usersJson);
-          } catch (error) {
-            handleApiError('getting users', error);
-            return [];
-          }
-        },
-        addUser: async (userData) => {
-          try {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            
-            // Generate new ID
-            userData.id = users.length > 0 
-              ? Math.max(...users.map(u => typeof u.id === 'number' ? u.id : 0)) + 1 
-              : 1;
-            
-            // Ensure status is set
-            userData.status = userData.status || 'active';
-            
-            // Add to users array
-            users.push(userData);
-            
-            // Save to localStorage
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            return { success: true };
-          } catch (error) {
-            handleApiError('adding user', error);
-            throw new Error('Failed to add user');
-          }
-        },
-        updateUser: async (userId, userData) => {
-          try {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const index = users.findIndex(u => u.id === userId);
-            
-            if (index !== -1) {
-              // Preserve user id
-              userData.id = userId;
-              
-              // Preserve password if not provided
-              if (!userData.password && users[index].password) {
-                userData.password = users[index].password;
-              }
-              
-              // Update user
-              users[index] = userData;
-              
-              // Save to localStorage
-              localStorage.setItem('users', JSON.stringify(users));
-              
-              return { success: true };
-            } else {
-              throw new Error('User not found');
-            }
-          } catch (error) {
-            handleApiError('updating user', error);
-            throw new Error('Failed to update user');
-          }
-        },
-        deleteUser: async (userId) => {
-          try {
-            let users = JSON.parse(localStorage.getItem('users') || '[]');
-            users = users.filter(u => u.id !== userId);
-            localStorage.setItem('users', JSON.stringify(users));
-            return { success: true };
-          } catch (error) {
-            handleApiError('deleting user', error);
-            throw new Error('Failed to delete user');
-          }
-        }
-      };
-      
-      // Initialize with sample users if none exist
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      if (existingUsers.length === 0) {
-        console.log('Creating default users...');
-        
-        const defaultAdmin = {
-          id: 1,
-          name: 'Admin User',
-          username: 'admin',
-          password: 'admin123',
-          email: 'admin@example.com',
-          role: 'admin',
-          status: 'active'
-        };
-        
-        const defaultEmployee = {
-          id: 2,
-          name: 'Employee User',
-          username: 'employee',
-          password: 'employee123',
-          email: 'employee@example.com',
-          role: 'employee',
-          status: 'active'
-        };
-        
-        localStorage.setItem('users', JSON.stringify([defaultAdmin, defaultEmployee]));
-        console.log('Default users created successfully');
-      } else {
-        // Ensure an admin user exists
-        const adminExists = existingUsers.some(u => u.role === 'admin');
-        
-        if (!adminExists) {
-          console.log('No admin user found. Creating default admin...');
-          
-          const defaultAdmin = {
-            id: existingUsers.length > 0 
-              ? Math.max(...existingUsers.map(u => typeof u.id === 'number' ? u.id : 0)) + 1 
-              : 1,
-            name: 'Admin User',
-            username: 'admin',
-            password: 'admin123',
-            email: 'admin@example.com',
-            role: 'admin',
-            status: 'active'
-          };
-          
-          existingUsers.push(defaultAdmin);
-          localStorage.setItem('users', JSON.stringify(existingUsers));
-          console.log('Default admin user created successfully');
-        }
-      }
-    }
+
     
     // Check if user is logged in
     const userString = sessionStorage.getItem('user');
@@ -495,20 +345,15 @@
     // Fetch users - both admins and employees can see the list, but only admins can edit
     async function loadUsers() {
       try {
-        if (window.api && window.api.getUsers) {
-          users = await window.api.getUsers();
-        } else {
-          // Fallback to localStorage for browser testing
-          users = JSON.parse(localStorage.getItem('users') || '[]');
-        }
-        
+        users = await window.api.getUsers();
+
         if (isAdmin) {
           renderUsers();
         }
       } catch (error) {
         console.error('Error loading users:', error);
         alert('Error loading users. Please try again.');
-        
+
         // Ensure the UI remains responsive
         recoverFormInputs();
       }
@@ -583,7 +428,7 @@
     
     // Handle edit button click
     function handleEditUser(e) {
-      const userId = parseInt(e.target.dataset.id);
+      const userId = e.target.dataset.id;
       currentUserId = userId;
       
       const userData = users.find(u => u.id === userId);
@@ -601,7 +446,7 @@
     
     // Handle delete button click
     async function handleDeleteUser(e) {
-      const userId = parseInt(e.target.dataset.id);
+      const userId = e.target.dataset.id;
       
       // Don't allow deleting the current user
       if (userId === user.id) {
@@ -622,7 +467,7 @@
     
     // Handle block/unblock button click
     async function handleToggleBlockUser(e) {
-      const userId = parseInt(e.target.dataset.id);
+      const userId = e.target.dataset.id;
       const currentStatus = e.target.dataset.status;
       
       // Don't allow blocking the current user (yourself)

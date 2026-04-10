@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supplier Management - Suppliers</title>
+  <title>Supplier Management - Supplier</title>
   <link rel="stylesheet" href="../components/Navbar.css">
   <style>
     body {
@@ -290,7 +290,7 @@
     <div class="main-content">
       <div class="container">
         <header>
-          <h1>Suppliers</h1>
+          <h1>Supplier</h1>
           <div class="header-actions">
             <button id="download-pdf-btn" class="btn btn-outline">Download PDF</button>
             <button id="add-vendor-btn" class="btn btn-primary">Add Supplier</button>
@@ -299,7 +299,7 @@
         
         <div class="page-content">
           <div class="filter-bar">
-            <input type="text" id="search-input" placeholder="Search suppliers...">
+            <input type="text" id="search-input" placeholder="Search supplier...">
             <div class="view-switcher">
               <button id="table-view-btn" class="view-btn active">Table View</button>
               <button id="grid-view-btn" class="view-btn">Grid View</button>
@@ -453,7 +453,7 @@
       
       // Add title
       doc.setFontSize(18);
-      doc.text('Suppliers List', 14, 22);
+      doc.text('Supplier List', 14, 22);
       
       // Add date
       doc.setFontSize(11);
@@ -496,7 +496,7 @@
       });
       
       // Save the PDF
-      doc.save('suppliers_list.pdf');
+      doc.save('supplier_list.pdf');
     }
 
     // Add event listener for download PDF button
@@ -614,7 +614,7 @@
     
     // Handle view buttons click
     function handleViewVendor(e) {
-      const vendorId = parseInt(e.target.dataset.id);
+      const vendorId = e.target.dataset.id;
       const vendor = vendors.find(v => v.id === vendorId);
       
       if (vendor) {
@@ -633,7 +633,7 @@
     
     // Handle edit button click
     function handleEditVendor(e) {
-      const vendorId = parseInt(e.target.dataset.id);
+      const vendorId = e.target.dataset.id;
       currentVendorId = vendorId;
       
       const vendor = vendors.find(v => v.id === vendorId);
@@ -652,9 +652,11 @@
     
     // Handle delete button click
     async function handleDeleteVendor(e) {
-      const vendorId = parseInt(e.target.dataset.id);
+      const vendorId = e.target.dataset.id;
+      const vendor = vendors.find(v => v.id === vendorId);
+      const vendorName = vendor ? vendor.name : 'Unknown';
       
-      if (confirm('Are you sure you want to delete this supplier?')) {
+      if (confirm(`Are you sure you want to delete ${vendorName}? This action cannot be undone.`)) {
         try {
           await window.api.deleteVendor(vendorId);
           loadVendors(); // Refresh the vendor list
@@ -814,6 +816,17 @@
     
     // Initial load
     loadVendors();
+
+    // Listen for real-time data syncs from MongoDB
+    window.api.onDataSync((event, changeEvent) => {
+      console.log('📡 Vendor data sync received:', changeEvent);
+      
+      // Reload vendors if vendors collection changed
+      if (changeEvent.collection === 'vendors') {
+        console.log('🔄 Reloading vendors from sync event...');
+        loadVendors();
+      }
+    });
   </script>
 </body>
 </html> 

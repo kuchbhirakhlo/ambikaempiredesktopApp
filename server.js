@@ -1,10 +1,16 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const http = require('http');
 const db = require('./src/utils/database');
+const initializeSocket = require('./server-socket');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = 3000;
+
+// Initialize Socket.io
+const io = initializeSocket(server);
 
 // Enable CORS with specific options for PWA
 app.use(cors({
@@ -17,6 +23,12 @@ app.use(cors({
 // Serve static files from src directory
 app.use(express.static(path.join(__dirname, 'src')));
 app.use(express.json());
+
+// Make io available to all routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Redirect root to login page
 app.get('/', (req, res) => {
@@ -169,6 +181,67 @@ app.get('/api/inventory', async (req, res) => {
   }
 });
 
+// Add API routes for customers
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await db.getAll('customers');
+    res.json(customers);
+  } catch (error) {
+    console.error('Error getting customers:', error);
+    res.status(500).json({ error: 'Failed to get customers' });
+  }
+});
+
+app.post('/api/customers', async (req, res) => {
+  try {
+    const customerData = req.body;
+    
+    // Auto-generate customer_ref_id if not provided
+    if (!customerData.customer_ref_id) {
+      const lastCustomer = await db.db.collection('customers').findOne(
+        {},
+        { sort: { _id: -1 } }
+      );
+      
+      let lastId = 1000;
+      if (lastCustomer && lastCustomer.customer_ref_id) {
+        const numId = parseInt(lastCustomer.customer_ref_id);
+        if (!isNaN(numId)) {
+          lastId = numId;
+        }
+      }
+      
+      customerData.customer_ref_id = (lastId + 1).toString();
+    }
+    
+    const newCustomer = await db.add('customers', customerData);
+    res.status(201).json(newCustomer);
+  } catch (error) {
+    console.error('Error adding customer:', error);
+    res.status(500).json({ error: 'Failed to add customer' });
+  }
+});
+
+app.put('/api/customers/:id', async (req, res) => {
+  try {
+    const updatedCustomer = await db.update('customers', req.params.id, req.body);
+    res.json(updatedCustomer);
+  } catch (error) {
+    console.error('Error updating customer:', error);
+    res.status(500).json({ error: 'Failed to update customer' });
+  }
+});
+
+app.delete('/api/customers/:id', async (req, res) => {
+  try {
+    await db.delete('customers', req.params.id);
+    res.status(204).end();
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    res.status(500).json({ error: 'Failed to delete customer' });
+  }
+});
+
 // Get orders
 app.get('/api/orders', async (req, res) => {
   try {
@@ -182,9 +255,12 @@ app.get('/api/orders', async (req, res) => {
 
 // Only start the server if this file is run directly
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
+    console.log(`\n========================================`);
     console.log(`Server running at http://localhost:${PORT}/`);
+    console.log(`Socket.io ready for real-time connections`);
+    console.log(`========================================\n`);
   });
 }
 
-module.exports = app; 
+module.exports = { app, server, io }; 

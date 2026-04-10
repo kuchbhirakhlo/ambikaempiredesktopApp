@@ -212,36 +212,7 @@
       errorMessage.style.display = 'block';
     }
 
-    // Initialize default admin user if no users exist
-    (function initAdminUser() {
-      try {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Check if users exist
-        if (users.length === 0) {
-          console.log('No users found. Creating default admin user...');
-          
-          // Create default admin user
-          const adminUser = {
-            id: 1,
-            name: 'Admin User',
-            username: 'admin',
-            password: 'admin123',
-            email: 'admin@example.com',
-            role: 'admin',
-            status: 'active'
-          };
-          
-          // Save to localStorage
-          localStorage.setItem('users', JSON.stringify([adminUser]));
-          console.log('Default admin user created successfully.');
-        }
-      } catch (error) {
-        console.error('Error initializing admin user:', error);
-        // Recover form inputs if there was an error
-        recoverFormInputs();
-      }
-    })();
+
     
     initializeYearDropdown();
 
@@ -262,38 +233,14 @@
         let userData = null;
         let errorMessage = null;
         
-        // Check if we can use the API (electron mode) or localStorage (browser mode)
-        if (window.api && window.api.login) {
-          // Electron mode with API
-          const result = await window.api.login({ username, password, year: selectedYear });
-          
-          if (result.success) {
-            isValid = true;
-            userData = result.user;
-          } else {
-            errorMessage = result.message;
-          }
-        } else {
-          // Browser mode with localStorage
-          const users = JSON.parse(localStorage.getItem('users') || '[]');
+        // Login using API
+        const result = await window.api.login({ username, password, year: selectedYear });
 
-          for (const user of users) {
-            if (user.username === username && user.password === password) {
-              if (user.status === 'blocked') {
-                errorMessage = 'Your account has been blocked. Please contact the administrator.';
-                break;
-              }
-              
-              isValid = true;
-              userData = { ...user, selectedYear };
-              delete userData.password;
-              break;
-            }
-          }
-          
-          if (!isValid && !errorMessage) {
-            errorMessage = 'Invalid username or password';
-          }
+        if (result.success) {
+          isValid = true;
+          userData = result.user;
+        } else {
+          errorMessage = result.message;
         }
 
         if (isValid && userData) {

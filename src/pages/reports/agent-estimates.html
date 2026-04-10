@@ -334,6 +334,24 @@
 
   <script src="../../components/Navbar.js"></script>
   <script>
+    // API wrapper - connects directly to MongoDB via Electron IPC
+    const API = {
+      // Estimates
+      async getEstimates() {
+        if (window.api && window.api.getEstimates) {
+          return await window.api.getEstimates();
+        }
+        throw new Error('API not available');
+      },
+      // Agents
+      async getAgents() {
+        if (window.api && window.api.getAgents) {
+          return await window.api.getAgents();
+        }
+        throw new Error('API not available');
+      }
+    };
+
     // Check if user is logged in
     const userString = sessionStorage.getItem('user');
     if (!userString) {
@@ -453,10 +471,11 @@
           }
         }
         
-        const allStoredEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-        
+        // Load estimates directly from MongoDB API
+        allEstimates = await API.getEstimates();
+
         // Filter by selected year
-        allEstimates = allStoredEstimates.filter(est => {
+        allEstimates = allEstimates.filter(est => {
           if (est.year) return est.year === selectedYear;
           const estDate = getEstimateDate(est);
           if (estDate) return estDate.getFullYear() === selectedYear;
@@ -539,11 +558,15 @@
       // First, try to use system agents from the Agents page
       let agentsList = [];
 
-      // Get agents from localStorage (from Agents page)
-      const storedAgents = JSON.parse(localStorage.getItem('agents') || '[]');
-      if (storedAgents && storedAgents.length > 0) {
-        agentsList = storedAgents.map(agent => agent.name).filter(name => name);
-        console.log('Agents from Agents Page:', agentsList);
+      // Get agents from MongoDB API
+      try {
+        const storedAgents = await API.getAgents();
+        if (storedAgents && storedAgents.length > 0) {
+          agentsList = storedAgents.map(agent => agent.name).filter(name => name);
+          console.log('Agents from MongoDB:', agentsList);
+        }
+      } catch (error) {
+        console.error('Error loading agents from API:', error);
       }
 
       // If no system agents, fall back to unique agents from estimates
@@ -682,8 +705,13 @@
       // Group by agent
       agentEstimatesMap = {};
 
-      // First, add all system agents (from Agents page) with empty data
-      const storedAgents = JSON.parse(localStorage.getItem('agents') || '[]');
+      // First, add all system agents from MongoDB with empty data
+      let storedAgents = [];
+      try {
+        storedAgents = await API.getAgents();
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
       if (storedAgents && storedAgents.length > 0) {
         storedAgents.forEach(agent => {
           if (agent.name) {
@@ -908,8 +936,8 @@
       });
 
       // Debug button event listener
-      document.getElementById('debug-btn').addEventListener('click', () => {
-        const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+      document.getElementById('debug-btn').addEventListener('click', async () => {
+        const estimates = await API.getEstimates();
         debugAgentInformation(estimates);
         debugEstimatesStructure();
         console.log('System Agents:', systemAgents);
@@ -1049,8 +1077,8 @@
     }
 
     // Add this debug function to see your actual data structure
-    function debugEstimatesStructure() {
-      const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+    async function debugEstimatesStructure() {
+      const estimates = await API.getEstimates();
       console.log('=== ESTIMATES DEBUG ===');
       console.log('Total estimates:', estimates.length);
 
@@ -1129,7 +1157,7 @@
         console.log('Loading agents from system...');
 
         // Ensure agents are available in localStorage
-        const agents = await ensureAgentsInLocalStorage();
+        const agents = await loadAgents();
 
         if (agents.length > 0) {
           systemAgents = agents;
@@ -1151,34 +1179,24 @@
       }
     }
 
-    // Function to ensure agents data is available in localStorage
-    async function ensureAgentsInLocalStorage() {
+    // Function to load agents from MongoDB
+    async function loadAgents() {
       try {
-        // Check if agents already exist in localStorage
-        const storedAgents = JSON.parse(localStorage.getItem('agents') || '[]');
+        console.log('Loading agents from MongoDB...');
 
-        if (storedAgents.length === 0) {
-          console.log('No agents found in localStorage, attempting to load from API...');
+        try {
+          // Load agents from API
+          const apiAgents = await API.getAgents();
 
-          try {
-            // Try to get agents from API
-            const apiAgents = await window.api.getAgents();
-
-            if (apiAgents && apiAgents.length > 0) {
-              // Store agents in localStorage
-              localStorage.setItem('agents', JSON.stringify(apiAgents));
-              console.log(`Saved ${apiAgents.length} agents to localStorage`);
-              return apiAgents;
-            }
-          } catch (error) {
+          if (apiAgents && apiAgents.length > 0) {
+            console.log(`Loaded ${apiAgents.length} agents from MongoDB`);
+            return apiAgents;
+          }
+        } catch (error) {
             console.error('Error fetching agents from API:', error);
           }
-        } else {
-          console.log(`Found ${storedAgents.length} agents in localStorage`);
-          return storedAgents;
-        }
       } catch (error) {
-        console.error('Error in ensureAgentsInLocalStorage:', error);
+        console.error('Error loading agents:', error);
       }
 
       return [];

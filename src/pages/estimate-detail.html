@@ -482,69 +482,6 @@
 
   <script src="../components/Navbar.js"></script>
   <script>
-    // API fallback for browser testing
-    if (!window.api) {
-      console.log('Running in browser mode - using localStorage API fallback');
-      
-      // Add sample estimate if none exists
-      const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-      if (estimates.length === 0) {
-        console.log('No estimates found, adding a sample estimate');
-        
-        const sampleEstimate = {
-          id: "1",
-          estimate_no: "EST-001",
-          date: new Date().toISOString(),
-          customer_name: "Sample Customer",
-          assigned_agent: "John Doe",
-          order_no: "ORD-001",
-          status: "pending",
-          total_amount: 2500,
-          advanceAmount: 0,
-          balanceAmount: 2500,
-          products: [
-            {
-              productCode: "P001",
-              name: "Sample Product",
-              size: "M",
-              category: "Electronics",
-              quantity: 5,
-              rate: 500,
-              amount: 2500
-            }
-          ]
-        };
-        
-        estimates.push(sampleEstimate);
-        localStorage.setItem('estimates', JSON.stringify(estimates));
-        
-        // If no ID in URL, add it
-        if (!urlParams.get('id')) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.set('id', "1");
-          window.history.replaceState({}, '', newUrl);
-        }
-      }
-      
-      window.api = {
-        getEstimateById: (id) => {
-          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          return Promise.resolve(estimates.find(est => est.id == id));
-        },
-        updateEstimateStatus: (id, status) => {
-          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          const index = estimates.findIndex(est => est.id == id);
-          
-          if (index !== -1) {
-            estimates[index].status = status;
-            localStorage.setItem('estimates', JSON.stringify(estimates));
-          }
-          
-          return Promise.resolve({ success: true });
-        }
-      };
-    }
-    
     // Get estimate ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const estimateId = urlParams.get('id');

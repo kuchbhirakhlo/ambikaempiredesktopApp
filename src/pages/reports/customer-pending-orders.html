@@ -252,6 +252,17 @@
 
   <script src="../../components/Navbar.js"></script>
   <script>
+    // API wrapper - connects directly to MongoDB via Electron IPC
+    const API = {
+      // Estimates
+      async getEstimates() {
+        if (window.api && window.api.getEstimates) {
+          return await window.api.getEstimates();
+        }
+        throw new Error('API not available');
+      }
+    };
+
     // Check if user is logged in
     const userString = sessionStorage.getItem('user');
     if (!userString) {
@@ -339,7 +350,7 @@
           }
         }
         
-        const allEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
+        const allEstimates = await API.getEstimates();
 
         // Filter by selected year first, then only pending estimates
         pendingEstimates = allEstimates.filter(estimate => {

@@ -749,125 +749,119 @@
 
   <script src="../components/Navbar.js"></script>
   <script>
-    // Browser compatibility layer for window.api
-    if (!window.api) {
-      console.log('Running in browser mode - using localStorage API fallback');
-      
-      // Get selected year from login
-      const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
-      
-      // Helper function to filter data by year
-      function filterByYear(items) {
-        if (!items || !Array.isArray(items)) return [];
-        return items.filter(item => {
-          if (item.year) return item.year === selectedYear;
-          if (item.date) return new Date(item.date).getFullYear() === selectedYear;
-          if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
-          return true;
-        });
-      }
-      
-      window.api = {
-        getProducts: async () => {
-          return JSON.parse(localStorage.getItem('products') || '[]');
-        },
-        getInventory: async () => {
-          const items = JSON.parse(localStorage.getItem('inventory') || '[]');
-          return filterByYear(items);
-        },
-        updateInventory: async (data) => {
-          const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-          const inventoryIndex = inventory.findIndex(item => item.productId === data.productId);
-          
-          if (inventoryIndex !== -1) {
-            inventory[inventoryIndex].quantity += data.quantity;
-          } else {
-            inventory.push({
-              productId: data.productId,
-              quantity: data.quantity,
-              location: data.location || 'Main Warehouse',
-              year: selectedYear
-            });
-          }
-          
-          // Also record a transaction for tracking
-          const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-          transactions.push({
-            id: transactions.length + 1,
-            type: 'inventory',
-            productId: data.productId,
-            quantity: data.quantity,
-            location: data.location || 'Main Warehouse',
-            createdBy: data.userId || 1,
-            timestamp: new Date().toISOString(),
-            year: selectedYear
-          });
-          
-          localStorage.setItem('inventory', JSON.stringify(inventory));
-          localStorage.setItem('transactions', JSON.stringify(transactions));
-          return { success: true };
-        },
-        getAllOrders: async () => {
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          return filterByYear(orders);
-        },
-        getEstimates: async () => {
-          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          return filterByYear(estimates);
-        },
-        updateEstimateStatus: async (id, status) => {
-          const estimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          const index = estimates.findIndex(est => est.id === id);
-          
-          if (index !== -1) {
-            estimates[index].status = status;
-            localStorage.setItem('estimates', JSON.stringify(estimates));
-          }
-          
-          return { success: true };
-        },
-        getCustomers: async () => {
-          return JSON.parse(localStorage.getItem('customers') || '[]');
+    // API wrapper - connects directly to MongoDB via Electron IPC
+    const API = {
+      // Products
+      async getProducts() {
+        if (window.api && window.api.getProducts) {
+          return await window.api.getProducts();
         }
-      };
-      
-      // Initialize sample data if not present
-      if (!localStorage.getItem('products')) {
-        const sampleProducts = [
-          { id: 1, code: 'P001', name: 'T-Shirt', category: 'Apparel', size: 'M', price: 25.99 },
-          { id: 2, code: 'P002', name: 'Jeans', category: 'Apparel', size: '32', price: 45.99 },
-          { id: 3, code: 'P003', name: 'Sneakers', category: 'Footwear', size: '9', price: 59.99 }
-        ];
-        localStorage.setItem('products', JSON.stringify(sampleProducts));
-        
-        const sampleInventory = [
-          { id: 1, productId: 1, code: 'P001', quantity: 50, location: 'Main Warehouse', year: selectedYear },
-          { id: 2, productId: 2, code: 'P002', quantity: 30, location: 'Main Warehouse', year: selectedYear },
-          { id: 3, productId: 3, code: 'P003', quantity: 20, location: 'Main Warehouse', year: selectedYear }
-        ];
-        localStorage.setItem('inventory', JSON.stringify(sampleInventory));
+        throw new Error('API not available');
+      },
+      // Inventory
+      async getInventory() {
+        if (window.api && window.api.getInventory) {
+          return await window.api.getInventory();
+        }
+        throw new Error('API not available');
+      },
+      async updateInventory(data) {
+        if (window.api && window.api.updateInventory) {
+          return await window.api.updateInventory(data);
+        }
+        throw new Error('API not available');
+      },
+      // Orders
+      async getOrders() {
+        if (window.api && window.api.getAllOrders) {
+          return await window.api.getAllOrders();
+        }
+        throw new Error('API not available');
+      },
+      async createOrder(data) {
+        if (window.api && window.api.createOrder) {
+          return await window.api.createOrder(data);
+        }
+        throw new Error('API not available');
+      },
+      async updateOrder(id, data) {
+        if (window.api && window.api.updateOrder) {
+          return await window.api.updateOrder(id, data);
+        }
+        throw new Error('API not available');
+      },
+      // Estimates
+      async getEstimates() {
+        if (window.api && window.api.getEstimates) {
+          return await window.api.getEstimates();
+        }
+        throw new Error('API not available');
+      },
+      async getEstimate(id) {
+        if (window.api && window.api.getEstimateById) {
+          return await window.api.getEstimateById(id);
+        }
+        throw new Error('API not available');
+      },
+      async createEstimate(data) {
+        if (window.api && window.api.addEstimate) {
+          return await window.api.addEstimate(data);
+        }
+        throw new Error('API not available');
+      },
+      async updateEstimate(id, data) {
+        if (window.api && window.api.updateEstimate) {
+          return await window.api.updateEstimate(id, data);
+        }
+        throw new Error('API not available');
+      },
+      async updateEstimateStatus(id, status) {
+        if (window.api && window.api.updateEstimateStatus) {
+          return await window.api.updateEstimateStatus(id, status);
+        }
+        throw new Error('API not available');
+      },
+      async deleteEstimate(id) {
+        if (window.api && window.api.deleteEstimate) {
+          return await window.api.deleteEstimate(id);
+        }
+        throw new Error('API not available');
+      },
+      // Vendors
+      async getVendors() {
+        if (window.api && window.api.getVendors) {
+          return await window.api.getVendors();
+        }
+        throw new Error('API not available');
+      },
+      // Customers
+      async getCustomers() {
+        if (window.api && window.api.getCustomers) {
+          return await window.api.getCustomers();
+        }
+        throw new Error('API not available');
       }
-    } else {
-      // Electron mode - define filterByYear for fallback scenarios
-      const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
-      function filterByYear(items) {
-        if (!items || !Array.isArray(items)) return [];
-        return items.filter(item => {
-          if (item.year) return item.year === selectedYear;
-          if (item.date) return new Date(item.date).getFullYear() === selectedYear;
-          if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
-          return true;
-        });
-      }
+    };
+
+    // Filter function for year-based data (used across the app)
+    const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
+    function filterByYear(items) {
+      if (!items || !Array.isArray(items)) return [];
+      return items.filter(item => {
+        if (item.year) return item.year === selectedYear;
+        if (item.date) return new Date(item.date).getFullYear() === selectedYear;
+        if (item.created_at) return new Date(item.created_at).getFullYear() === selectedYear;
+        return true;
+      });
     }
     
     // Initialize the page when loaded
     document.addEventListener('DOMContentLoaded', async function() {
       // Ensure the active year is set in the database
       await ensureActiveYear();
-      // Get current user
+      // Get current user from session
       try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         if (currentUser) {
           user = currentUser;
           document.getElementById('userName').textContent = user.name || 'Admin';
@@ -882,14 +876,7 @@
         await loadOrders();
         await loadEstimates();
         
-        // Check for any pending estimate updates from other tabs
-        const lastEstimateUpdate = localStorage.getItem('estimate-update-timestamp');
-        if (lastEstimateUpdate) {
-          console.log('Found pending estimate updates, refreshing data');
-          const action = localStorage.getItem('estimate-update-action');
-          const updateData = JSON.parse(localStorage.getItem('estimate-update-data') || '{}');
-          console.log(`Pending update: ${action} for estimate ID: ${updateData.id}`);
-        }
+        // Data is always loaded fresh from MongoDB - no need for localStorage sync
         
         // Set up the click listeners for nav links
         if (typeof setupNavListeners !== 'function') {
@@ -925,6 +912,54 @@
         
         // Check if we need to show a specific estimate (from reports page)
         checkForEstimateToView();
+
+        // Set up real-time data synchronization
+        window.api?.onDataSync?.((changeEvent) => {
+          console.log('🔄 Real-time data change detected:', changeEvent.collection, changeEvent.operation);
+          // Refresh data based on what changed
+          if (changeEvent.collection === 'orders') {
+            console.log('🔄 Refreshing orders due to change from another app');
+            loadOrders();
+          } else if (changeEvent.collection === 'estimates') {
+            console.log('🔄 Refreshing estimates due to change from another app');
+            loadEstimates();
+          } else if (changeEvent.collection === 'products' || changeEvent.collection === 'inventory') {
+            console.log('🔄 Refreshing products/inventory due to change from another app');
+            loadProductsAndInventory();
+          }
+        });
+
+        // Add synchronization verification (for debugging)
+        window.verifySync = async () => {
+          try {
+            const summary = await window.api.getDataSummary();
+            console.log('📊 Current data summary (Electron App):', summary);
+            alert('Check console for data synchronization summary. Copy this data to compare with your Next.js app.');
+            return summary;
+          } catch (error) {
+            console.error('Error getting data summary:', error);
+            alert('Error checking synchronization status');
+          }
+        };
+
+        // Function to compare synchronization with another app
+        window.compareWithOtherApp = async (remoteSummary) => {
+          try {
+            const localSummary = await window.api.getDataSummary();
+            const comparison = await window.api.compareDataSummaries(localSummary, remoteSummary);
+            console.log('🔍 Synchronization comparison:', comparison);
+
+            if (comparison.collectionsMatch) {
+              alert('✅ Apps are synchronized! All data matches between Electron and Next.js apps.');
+            } else {
+              alert('❌ Synchronization mismatch detected. Check console for details.');
+            }
+            return comparison;
+          } catch (error) {
+            console.error('Error comparing synchronization:', error);
+            alert('Error comparing synchronization status');
+          }
+        };
       } catch (error) {
         console.error('Error during page initialization:', error);
         alert('Failed to initialize the page. Please refresh and try again.');
@@ -1339,14 +1374,14 @@
           });
         }
         
-        // Add the order
-        orders.push(newOrder);
-        
-        // Save to localStorage
-        localStorage.setItem('orders', JSON.stringify(orders));
-        
+        // Create the order via API
+        const createdOrder = await API.createOrder(newOrder);
+
+        // Add to local array for UI consistency
+        orders.push(createdOrder);
+
         // Broadcast the order update to other pages
-        broadcastOrderUpdate('add', newOrder);
+        broadcastOrderUpdate('add', createdOrder);
         
         // Reset the form
         document.getElementById('order-form').classList.add('hidden');
@@ -1372,21 +1407,9 @@
           await loadProductsAndInventory();
         }
         
-        // Try to get orders from the year-scoped API
-        try {
-          if (window.api && window.api.getAllOrders) {
-            orders = await window.api.getAllOrders();
-          } else {
-            const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-            orders = filterByYear(storedOrders);
-          }
-          console.log('Orders loaded (year scoped):', orders);
-        } catch (error) {
-          console.error('Error loading orders from API:', error);
-          // Use localStorage as fallback with year filter
-          const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          orders = filterByYear(storedOrders);
-        }
+        // Load orders directly from MongoDB API
+        orders = await API.getOrders();
+        console.log('Orders loaded from MongoDB:', orders);
         
         return orders;
       } catch (error) {
@@ -1627,9 +1650,9 @@
       // Update total amount
       order.totalAmount = order.items.reduce((sum, item) => sum + item.total, 0);
       order.totalItems = order.items.length;
-      
-      // Update localStorage
-      localStorage.setItem('orders', JSON.stringify(orders));
+
+      // Update order in MongoDB
+      await API.updateOrder(order.id, order);
       
       // Refresh the order detail view
       showOrderDetail(true);
@@ -1792,8 +1815,8 @@
             }
           }
           
-          // Update localStorage
-          localStorage.setItem('orders', JSON.stringify(orders));
+          // Update order in MongoDB
+          await API.updateOrder(order.id, order);
           
           // Broadcast inventory changes to other pages
           broadcastInventoryUpdate(item.productCode, productInventory[item.productCode]?.stock || 0);
@@ -1806,83 +1829,28 @@
     // Function to broadcast inventory updates to other pages
     function broadcastInventoryUpdate(productCode, newStock) {
       console.log(`Broadcasting inventory update for ${productCode}: ${newStock} units`);
-      
-      // Method 1: Use localStorage for cross-tab communication
+
+      // Use custom event for same-page communication
       const timestamp = new Date().getTime();
-      localStorage.setItem('inventory-update-timestamp', timestamp.toString());
-      localStorage.setItem('inventory-update-product', productCode);
-      localStorage.setItem('inventory-update-stock', newStock.toString());
-      
-      // Method 2: Use a custom event for same-page communication
       const event = new CustomEvent('inventory-update', {
         detail: { productCode, newStock, timestamp }
       });
       window.dispatchEvent(event);
       
-      // Method 3: Manually create and dispatch a storage event
-      try {
-        // Create a new storage event - this is important for cross-window communication
-        const storageEvent = new StorageEvent('storage', {
-          key: 'inventory-update-timestamp',
-          oldValue: null,
-          newValue: timestamp.toString(),
-          storageArea: localStorage
-        });
-        
-        // Dispatch the event to the current window
-        window.dispatchEvent(storageEvent);
-        
-        // For older browsers, we also use the following technique
-        // First, remove the item
-        localStorage.removeItem('inventory-update-force');
-        // Then add it back with a different value to trigger a change
-        localStorage.setItem('inventory-update-force', timestamp.toString());
-        
-        console.log('Successfully broadcasted inventory update');
-      } catch (e) {
-        console.warn('Could not dispatch storage event manually:', e);
-      }
+      console.log('Successfully broadcasted inventory update');
     }
 
-    // Add this function after the broadcastInventoryUpdate function
+    // Function to force inventory refresh
     function forceInventoryRefresh() {
-      console.log("Forcing inventory refresh across all pages...");
-      
-      // Create a special flag that indicates a forced refresh is needed
+      console.log("Forcing inventory refresh...");
+
+      // Dispatch custom event for same-page inventory refresh
       const timestamp = Date.now();
-      
-      // Use a distinctive key that inventory.html is already listening for
-      localStorage.setItem('inventory-force-refresh', timestamp.toString());
-      
-      // Also update these keys to ensure compatibility with existing listeners
-      localStorage.setItem('inventory-update-timestamp', timestamp.toString());
-      localStorage.setItem('inventory-update-force', timestamp.toString());
-      localStorage.setItem('product-update-timestamp', timestamp.toString());
-      localStorage.setItem('order-update-timestamp', timestamp.toString());
-      
-      // Create and fire a storage event manually
-      try {
-        const event = new StorageEvent('storage', {
-          key: 'inventory-force-refresh',
-          newValue: timestamp.toString(),
-          oldValue: null,
-          storageArea: localStorage
-        });
-        window.dispatchEvent(event);
-        console.log("Successfully dispatched forced inventory refresh event");
-      } catch (err) {
-        console.warn("Could not dispatch storage event manually:", err);
-      }
-      
-      // Try alternate method for cross-tab communication
-      try {
-        // Remove and set to force event triggering
-        localStorage.removeItem('inventory-trigger-refresh');
-        localStorage.setItem('inventory-trigger-refresh', timestamp.toString());
-        console.log("Successfully used alternate method for cross-tab notification");
-      } catch (err) {
-        console.warn("Error with alternate notification method:", err);
-      }
+      const event = new CustomEvent('inventory-force-refresh', {
+        detail: { timestamp }
+      });
+      window.dispatchEvent(event);
+      console.log("Successfully dispatched forced inventory refresh event");
     }
 
     // Function to save order changes including inventory updates
@@ -1890,7 +1858,7 @@
       if (selectedOrderIndex === null) return;
       
       const order = orders[selectedOrderIndex];
-      const originalOrder = JSON.parse(localStorage.getItem('orders') || '[]')[selectedOrderIndex];
+      const originalOrder = JSON.parse(JSON.stringify(order)); // Create a copy for comparison
       
       try {
         // Show loading indicator or disable the save button
@@ -1999,9 +1967,11 @@
           }
         }
         
-        // Save the updated order
+        // Update the order in MongoDB
+        await API.updateOrder(order.id, order);
+
+        // Update local array
         orders[selectedOrderIndex] = order;
-        localStorage.setItem('orders', JSON.stringify(orders));
         
         // Broadcast the order update
         broadcastOrderUpdate('update', order);
@@ -2022,9 +1992,7 @@
             }
           });
           
-          // Store this fresh data where inventory.html can access it
-          localStorage.setItem('inventory-data', JSON.stringify(updatedInventory));
-          localStorage.setItem('inventory-last-update', Date.now().toString());
+          // Data will be loaded fresh from MongoDB when needed
         } catch (error) {
           console.error("Error refreshing inventory data:", error);
         }
@@ -2032,24 +2000,7 @@
         // Now force inventory refresh across all pages
         forceInventoryRefresh();
         
-        // Additionally broadcast each individual inventory change for real-time updates
-        for (const change of inventoryChanges) {
-          const updateTime = Date.now();
-          console.log(`Broadcasting specific update for ${change.productCode}: ${change.oldStock} -> ${change.newStock}`);
-          
-          // Store detailed info about this inventory change
-          localStorage.setItem(`inventory-item-${change.productCode}`, JSON.stringify({
-            code: change.productCode,
-            quantity: change.newStock,
-            change: change.change,
-            timestamp: updateTime
-          }));
-          
-          // Use the combined approach with both storage events and custom keys
-          localStorage.setItem('inventory-update-product', change.productCode);
-          localStorage.setItem('inventory-update-stock', change.newStock.toString());
-          localStorage.setItem('inventory-update-timestamp', updateTime.toString());
-        }
+        // Inventory changes will be reflected when pages reload fresh data from MongoDB
         
         // Log inventory changes for debugging
         console.log("Inventory changes summary:");
@@ -2099,8 +2050,8 @@
             item.rate = product.price;
             item.total = item.quantity * item.rate;
             
-            // Update localStorage
-            localStorage.setItem('orders', JSON.stringify(orders));
+          // Update order in MongoDB
+          await API.updateOrder(order.id, order);
             
             showOrderDetail(true);
           }
@@ -2117,10 +2068,10 @@
           item.rate = parseFloat(value) || 0;
           item.total = item.quantity * item.rate;
           order.totalAmount = order.items.reduce((sum, item) => sum + item.total, 0);
-          
-          // Update localStorage
-          localStorage.setItem('orders', JSON.stringify(orders));
-          
+
+          // Update order in MongoDB
+          await API.updateOrder(order.id, order);
+
           showOrderDetail(true);
         }
       }
@@ -2155,13 +2106,14 @@
         items: [...order.items]
       };
       
-      estimates.push(newEstimate);
-      
-      // Save to localStorage
-      localStorage.setItem('estimates', JSON.stringify(estimates));
-      
+      // Create estimate via API
+      const createdEstimate = await API.createEstimate(newEstimate);
+
+      // Add to local array for UI consistency
+      estimates.push(createdEstimate);
+
       // Broadcast the estimate update to other pages
-      broadcastEstimateUpdate('add', newEstimate);
+      broadcastEstimateUpdate('add', createdEstimate);
       
       alert(`Estimate ${estimateId} has been generated from order ${order.id}`);
       
@@ -2177,21 +2129,9 @@
           await loadProductsAndInventory();
         }
         
-        // Try to get estimates from the year-scoped API
-        try {
-          if (window.api && window.api.getEstimates) {
-            estimates = await window.api.getEstimates();
-          } else {
-            const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-            estimates = filterByYear(storedEstimates);
-          }
-          console.log('Estimates loaded (year scoped):', estimates);
-        } catch (error) {
-          console.error('Error loading estimates from API:', error);
-          // Use localStorage as fallback with year filter
-          const storedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-          estimates = filterByYear(storedEstimates);
-        }
+        // Load estimates directly from MongoDB API
+        estimates = await API.getEstimates();
+        console.log('Estimates loaded from MongoDB:', estimates);
         
         // Only render when specifically viewing estimates section, 
         // not when loading for reference in orders section
@@ -2244,12 +2184,12 @@
         // Get the ID before deleting the estimate
         const estimateId = estimates[index].id;
         
-        // Remove the estimate from the array
+        // Delete estimate from MongoDB
+        await API.deleteEstimate(estimateId);
+
+        // Remove from local array
         estimates.splice(index, 1);
-        
-        // Save to localStorage
-        localStorage.setItem('estimates', JSON.stringify(estimates));
-        
+
         // Broadcast the estimate update
         broadcastEstimateUpdate('delete', { id: estimateId });
         
@@ -2444,10 +2384,10 @@
             item.size = product.size;
             item.rate = product.price;
             item.total = item.quantity * item.rate;
-            
-            // Save to localStorage
-            localStorage.setItem('estimates', JSON.stringify(estimates));
-            
+
+            // Update estimate in MongoDB
+            await API.updateEstimate(estimate.id, estimate);
+
             showEstimateDetail(true);
           }
         }
@@ -2483,10 +2423,10 @@
           // Recalculate total amount and balance
           estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
           estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
-          
-          // Save to localStorage
-          localStorage.setItem('estimates', JSON.stringify(estimates));
-          
+
+          // Update estimate in MongoDB
+          await API.updateEstimate(estimate.id, estimate);
+
           showEstimateDetail(true);
         }
       }
@@ -2502,10 +2442,10 @@
           item.total = item.quantity * item.rate;
           estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
           estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
-          
-          // Save to localStorage
-          localStorage.setItem('estimates', JSON.stringify(estimates));
-          
+
+          // Update estimate in MongoDB
+          await API.updateEstimate(estimate.id, estimate);
+
           showEstimateDetail(true);
         }
       }
@@ -2523,7 +2463,8 @@
       estimate.advanceAmount = advanceAmount;
       estimate.balanceAmount = estimate.totalAmount - advanceAmount;
 
-      localStorage.setItem('estimates', JSON.stringify(estimates));
+      // Update estimate in MongoDB
+      await API.updateEstimate(estimate.id, estimate);
       broadcastEstimateUpdate('update', estimate);
       showEstimateDetail(true);
     }
@@ -2580,12 +2521,6 @@
       
       // Dispatch the event to window for local updates
       window.dispatchEvent(event);
-      
-      // Also store latest version in localStorage for cross-page updates
-      const timestamp = new Date().getTime();
-      localStorage.setItem('estimate-update-timestamp', timestamp.toString());
-      localStorage.setItem('estimate-update-action', action);
-      localStorage.setItem('estimate-update-data', JSON.stringify(estimate));
     }
 
     // Function to update estimate status from detail view
@@ -2604,9 +2539,6 @@
         
         // Update local estimate data
         estimate.status = statusToSave;
-        
-        // Update localStorage to ensure persistence
-        localStorage.setItem('estimates', JSON.stringify(estimates));
         
         // Update the UI to reflect the change immediately
         const statusText = newStatus === 'completed' ? 'Completed' : 'Pending';
@@ -3237,10 +3169,10 @@
       estimate.totalItems = estimate.items.length;
       estimate.totalAmount = estimate.items.reduce((sum, item) => sum + item.total, 0);
       estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
-      
-      // Save to localStorage
-      localStorage.setItem('estimates', JSON.stringify(estimates));
-      
+
+      // Update estimate in MongoDB
+      await API.updateEstimate(estimate.id, estimate);
+
       // Refresh the detail view
       showEstimateDetail(true);
     }
@@ -3352,9 +3284,9 @@
       estimate.totalItems = estimate.items.length;
       estimate.balanceAmount = estimate.totalAmount - (estimate.advanceAmount || 0);
       
-      // Update localStorage
-      localStorage.setItem('estimates', JSON.stringify(estimates));
-      
+      // Update estimate in MongoDB
+      await API.updateEstimate(estimate.id, estimate);
+
       // Broadcast the estimate update
       broadcastEstimateUpdate('update', estimate);
       
@@ -3376,9 +3308,9 @@
         
         const estimate = estimates[selectedEstimateIndex];
         
-        // Save to localStorage
-        localStorage.setItem('estimates', JSON.stringify(estimates));
-        
+        // Update estimate in MongoDB
+        await API.updateEstimate(estimate.id, estimate);
+
         // Broadcast the estimate update
         broadcastEstimateUpdate('update', estimate);
         

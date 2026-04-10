@@ -416,68 +416,6 @@
 
   <script src="../components/Navbar.js"></script>
   <script>
-    // Add browser compatibility layer for window.api
-    if (!window.api) {
-      console.log('Running in browser mode - using localStorage API fallback');
-      window.api = {
-        getProducts: async () => {
-          return JSON.parse(localStorage.getItem('products') || '[]');
-        },
-        getInventory: async () => {
-          return JSON.parse(localStorage.getItem('inventory') || '[]');
-        },
-        getAgents: async () => {
-          return JSON.parse(localStorage.getItem('agents') || '[]');
-        },
-        getCustomers: async () => {
-          return JSON.parse(localStorage.getItem('customers') || '[]');
-        },
-        updateInventory: async (data) => {
-          const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-          const inventoryIndex = inventory.findIndex(item => item.productId === data.productId);
-
-          if (inventoryIndex !== -1) {
-            inventory[inventoryIndex].quantity += data.quantity;
-          }
-
-          // Also record a transaction for tracking
-          const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-          transactions.push({
-            id: transactions.length + 1,
-            type: 'inventory',
-            productId: data.productId,
-            quantity: data.quantity,
-            location: data.location || 'Main Warehouse',
-            createdBy: data.userId || 1,
-            timestamp: new Date().toISOString()
-          });
-
-          localStorage.setItem('inventory', JSON.stringify(inventory));
-          localStorage.setItem('transactions', JSON.stringify(transactions));
-          return { success: true };
-        }
-      };
-
-      // Sample data for browser mode
-      if (!localStorage.getItem('agents')) {
-        const sampleAgents = [
-          { id: 1, name: 'John Smith', email: 'john@example.com', phone: '123-456-7890' },
-          { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', phone: '234-567-8901' },
-          { id: 3, name: 'Michael Brown', email: 'michael@example.com', phone: '345-678-9012' }
-        ];
-        localStorage.setItem('agents', JSON.stringify(sampleAgents));
-      }
-
-      if (!localStorage.getItem('customers')) {
-        const sampleCustomers = [
-          { id: 1, name: 'Acme Corporation', contact: 'David Johnson', email: 'david@acme.com', agentName: 'John Smith' },
-          { id: 2, name: 'Global Industries', contact: 'Emily Wilson', email: 'emily@global.com', agentName: 'Sarah Johnson' },
-          { id: 3, name: 'Tech Solutions', contact: 'Robert Chen', email: 'robert@tech.com', agentName: 'Michael Brown' }
-        ];
-        localStorage.setItem('customers', JSON.stringify(sampleCustomers));
-      }
-    }
-
     // Check if user is logged in
     const userString = sessionStorage.getItem('user');
     if (!userString) {
@@ -530,8 +468,8 @@
 
         // Load order number (scoped to selected year)
         const selectedYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
-        let allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        let yearOrders = allOrders.filter(o => {
+        const allOrders = await window.api.getAllOrders();
+        const yearOrders = allOrders.filter(o => {
           if (o.year) return o.year === selectedYear;
           if (o.date) return new Date(o.date).getFullYear() === selectedYear;
           return true;
@@ -543,54 +481,7 @@
         renderOrderItems();
       } catch (error) {
         console.error('Error initializing page:', error);
-        // Fallback to local data if API fails
-        products = [
-          { code: 'P001', name: 'Product 1', category: 'Electronics', size: 'M', price: 1200 },
-          { code: 'P002', name: 'Product 2', category: 'Clothing', size: 'L', price: 850 },
-          { code: 'P003', name: 'Product 3', category: 'Home', size: 'S', price: 450 },
-          { code: 'P004', name: 'Product 4', category: 'Electronics', size: 'XL', price: 2500 }
-        ];
-
-        productInventory = {
-          'P001': { stock: 120, supplier: 'ABC Suppliers', lastUpdated: '2023-05-15' },
-          'P002': { stock: 45, supplier: 'XYZ Distributors', lastUpdated: '2023-05-10' },
-          'P003': { stock: 8, supplier: 'Premium Products', lastUpdated: '2023-05-12' },
-          'P004': { stock: 0, supplier: 'Global Vendors', lastUpdated: '2023-05-05' }
-        };
-
-        // Fallback for agents and customers
-        agents = [
-          { id: 1, name: 'John Smith' },
-          { id: 2, name: 'Sarah Johnson' }
-        ];
-
-        customers = [
-          { id: 1, name: 'Acme Corporation', agentName: 'John Smith' },
-          { id: 2, name: 'Global Industries', agentName: 'Sarah Johnson' }
-        ];
-
-        // Populate customer dropdown list in fallback mode
-        const customerList = document.getElementById('customerList');
-        customerList.innerHTML = '';
-        customers.forEach(customer => {
-          const option = document.createElement('option');
-          option.value = customer.name;
-          customerList.appendChild(option);
-        });
-
-        // Load order number (scoped to selected year)
-        const fallbackYear = parseInt(sessionStorage.getItem('selectedYear')) || new Date().getFullYear();
-        let fallbackOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        let fallbackYearOrders = fallbackOrders.filter(o => {
-          if (o.year) return o.year === fallbackYear;
-          if (o.date) return new Date(o.date).getFullYear() === fallbackYear;
-          return true;
-        });
-        document.getElementById('orderNumber').value = 'ORD-' + (fallbackYearOrders.length + 1).toString().padStart(3, '0');
-        document.getElementById('orderDate').valueAsDate = new Date();
-
-        // Initialize with one input row
-        renderOrderItems();
+        alert('Error loading page data from MongoDB. Please refresh and try again.');
       }
     }
 
@@ -1137,12 +1028,9 @@
           }
         }
 
-        // Get existing orders from localStorage
-        let orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        orders.push(newOrder);
-
-        // Save back to localStorage
-        localStorage.setItem('orders', JSON.stringify(orders));
+        // Save order to MongoDB via API
+        const savedOrder = await window.api.createOrder(newOrder);
+        console.log('Order saved to MongoDB:', savedOrder);
 
         // Broadcast the order update to other pages
         broadcastOrderUpdate('add', newOrder);

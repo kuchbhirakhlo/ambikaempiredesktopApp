@@ -1,11 +1,31 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+// Check if we're running in Electron
+if (typeof require !== 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.electron) {
+  // Running in Electron main process
+  var electron = require('electron');
+  var app = electron.app;
+  var BrowserWindow = electron.BrowserWindow;
+  var ipcMain = electron.ipcMain;
+  console.log('Electron app loaded:', typeof app);
+} else {
+  console.error('Not running in Electron environment');
+  process.exit(1);
+}
 const path = require('path');
-const db = require('./utils/database');
+const getDatabase = require('./utils/database');
 const mongoSync = require('./utils/mongodb-sync');
-const express = require('express');
-const server = require('../server');
 
 let mainWindow;
+let db;
+
+/**
+ * Suppress EGL errors - common on macOS with certain GPU configurations
+ * This doesn't affect functionality
+ */
+try {
+  app.commandLine.appendSwitch('disable-gpu-driver-bug-workarounds');
+} catch (error) {
+  console.log('Could not set GPU workaround switch:', error.message);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -21,21 +41,119 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'pages', 'login.html'));
 }
 
-app.whenReady().then(() => {
+// Wait for app to be ready
+if (app.isReady()) {
+  initializeApp();
+} else {
+  app.on('ready', initializeApp);
+}
+
+async function initializeApp() {
+  db = getDatabase();
+  
+  // Enable auto-sync for real-time updates across all apps
+  mongoSync.setSyncEnabled(true);
+  console.log('✓ MongoDB real-time synchronization enabled for multi-app data sharing');
+  
+  // Test connection on startup - MongoDB is required
+  const connTest = await mongoSync.testConnection();
+  if (connTest.success) {
+    console.log('✓ MongoDB connection successful');
+
+    // Start persistent connection and real-time sync
+    await mongoSync.startRealtimeSync();
+
+    // Share the connection with database utility
+    db.setConnection(mongoSync.client, mongoSync.db);
+
+    // Do initial data sync after connection is set
+    setTimeout(async () => {
+      try {
+        const syncResult = await mongoSync.syncFromMongoDB();
+        if (syncResult.success) {
+          console.log('✓ Initial data sync complete');
+        } else {
+          console.error('✗ Initial data sync failed:', syncResult.message);
+        }
+      } catch (error) {
+        console.error('✗ Error during initial data sync:', error.message);
+      }
+    }, 2000); // Increased delay to ensure connection is ready
+  } else {
+    console.error('✗ MongoDB connection failed - showing error page to user');
+    console.error('Error:', connTest.message);
+
+    // Instead of quitting, show an error page
+    mainWindow.loadFile(path.join(__dirname, 'pages', 'db-error.html'));
+    return;
+  }
+  
+  // No Socket.io connection needed - app connects directly to MongoDB
+  
+  // Set up real-time data change listeners
+  mongoSync.on('data-change', (changeEvent) => {
+    // Broadcast data changes to all renderer processes
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('data-sync', changeEvent);
+    }
+  });
+  
+  // Periodic sync check to ensure watchers are active and data is synchronized
+  setInterval(async () => {
+    if (mongoSync.syncEnabled) {
+      try {
+        const status = mongoSync.getSyncStatus();
+        if (status.activeWatchers === 0) {
+          console.log('🔄 Watchers stopped, restarting real-time sync for multi-app synchronization');
+          await mongoSync.startRealtimeSync();
+        } else {
+          console.log(`✓ Multi-app sync active: ${status.activeWatchers} collections watched`);
+        }
+      } catch (error) {
+        console.error('Error in periodic sync check:', error.message);
+      }
+    }
+  }, 30000); // Check every 30 seconds
+
+  // Log synchronization status on startup
+  setTimeout(async () => {
+    try {
+      const status = mongoSync.getSyncStatus();
+      const summary = await mongoSync.getDataSummary();
+      console.log('🚀 Multi-App Synchronization Status:');
+      console.log('- Sync Enabled:', status.syncEnabled);
+      console.log('- Active Watchers:', status.activeWatchers);
+      console.log('- Watched Collections:', status.watchedCollections);
+      console.log('- Data Summary:', summary);
+    } catch (error) {
+      console.error('Error getting synchronization status:', error);
+    }
+  }, 5000);
+  
   createWindow();
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
+}
 
-app.on('window-all-closed', function () {
-  // Close database connection before quitting
-  db.close();
+// Graceful shutdown
+app.on('window-all-closed', async function () {
+  // Stop all watchers and close connection properly
+  await mongoSync.stopAllWatchers();
+  await mongoSync.disconnect();
+
   if (process.platform !== 'darwin') app.quit();
 });
 
+app.on('before-quit', async () => {
+  // Ensure clean shutdown
+  await mongoSync.disconnect();
+});
+
 // IPC handlers
+
+// Handle login
 ipcMain.handle('login', async (event, credentials) => {
   try {
     const selectedYear = Number.parseInt(credentials.year, 10) || new Date().getFullYear();
@@ -53,7 +171,7 @@ ipcMain.handle('login', async (event, credentials) => {
     
     return { success: true, user: { ...user, selectedYear } };
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error.message);
     return { success: false, message: 'An error occurred during login' };
   }
 });
@@ -319,6 +437,24 @@ ipcMain.handle('get-customer', async (event, customerId) => {
 
 ipcMain.handle('add-customer', async (event, customerData) => {
   try {
+    // Auto-generate customer_ref_id if not provided
+    if (!customerData.customer_ref_id) {
+      const lastCustomer = await db.db.collection('customers').findOne(
+        {},
+        { sort: { _id: -1 } }
+      );
+      
+      let lastId = 1000;
+      if (lastCustomer && lastCustomer.customer_ref_id) {
+        const numId = parseInt(lastCustomer.customer_ref_id);
+        if (!isNaN(numId)) {
+          lastId = numId;
+        }
+      }
+      
+      customerData.customer_ref_id = (lastId + 1).toString();
+    }
+    
     return await db.add('customers', customerData);
   } catch (error) {
     console.error('Error adding customer:', error);
@@ -484,6 +620,24 @@ ipcMain.handle('get-sync-status', async () => {
   }
 });
 
+ipcMain.handle('get-data-summary', async () => {
+  try {
+    return await mongoSync.getDataSummary();
+  } catch (error) {
+    console.error('Error getting data summary:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('compare-data-summaries', async (event, localSummary, remoteSummary) => {
+  try {
+    return mongoSync.compareDataSummaries(localSummary, remoteSummary);
+  } catch (error) {
+    console.error('Error comparing data summaries:', error);
+    throw error;
+  }
+});
+
 ipcMain.handle('set-sync-enabled', async (event, enabled) => {
   try {
     return mongoSync.setSyncEnabled(enabled);
@@ -503,7 +657,6 @@ ipcMain.handle('test-mongodb-connection', async () => {
     return { 
       success: false, 
       message: `Connection failed: ${error.message}`,
-      offline: true,
       error: error
     };
   }
@@ -529,30 +682,10 @@ ipcMain.handle('sync-from-mongodb', async () => {
     return result;
   } catch (error) {
     console.error('Error during sync from MongoDB:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: `Sync failed: ${error.message}`,
       error: error
     };
   }
 });
-      offline: true,
-      error: error
-    };
-  }
-});
-
-// Add handler to toggle offline mode
-ipcMain.handle('toggle-offline-mode', async (event, forceOffline) => {
-  if (forceOffline !== undefined) {
-    mongoSync.isOffline = forceOffline;
-  } else {
-    mongoSync.isOffline = !mongoSync.isOffline;
-  }
-  
-  return { 
-    success: true, 
-    offline: mongoSync.isOffline,
-    message: mongoSync.isOffline ? 'Application is now in offline mode' : 'Application is now in online mode'
-  };
-}); 

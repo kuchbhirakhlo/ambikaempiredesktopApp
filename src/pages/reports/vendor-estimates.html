@@ -258,27 +258,21 @@
       return selectedYear;
     }
 
-    // Sample data - In a real app, this would come from your backend
-    const estimates = [
-      {
-        id: "VEST001",
-        vendorName: "Tech Solutions Ltd",
-        category: "Electronics",
-        date: "2024-03-15",
-        items: ["Laptops", "Monitors"],
-        total: 45000,
-        status: "Pending"
-      },
-      {
-        id: "VEST002",
-        vendorName: "Office Furnish Pro",
-        category: "Furniture",
-        date: "2024-03-14",
-        items: ["Chairs", "Desks"],
-        total: 33450,
-        status: "Approved"
+    // Estimates loaded from MongoDB
+    let estimates = [];
+    
+    // Load estimates from MongoDB
+    async function loadEstimates() {
+      try {
+        estimates = await window.api.getEstimates() || [];
+        console.log('Estimates loaded from MongoDB:', estimates);
+        renderEstimates(estimates);
+      } catch (error) {
+        console.error('Error loading estimates:', error);
+        estimates = [];
+        renderEstimates([]);
       }
-    ];
+    }
 
     function renderEstimates(estimates) {
       const tableBody = document.getElementById('estimates-table');
@@ -308,13 +302,13 @@
     }
 
     // Initialize the page
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Ensure the active year is set before loading data
-      initializeYear().then(() => {
-        renderEstimates(estimates);
-      });
+      await initializeYear();
+      // Load estimates from MongoDB
+      await loadEstimates();
 
-      // Populate vendor dropdown with sample data
+      // Populate vendor dropdown from MongoDB data
       const vendorSelect = document.getElementById('vendor');
       const vendors = [
         { id: 1, name: "Tech Solutions Ltd" },

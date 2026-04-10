@@ -515,39 +515,6 @@
     // Add event listener for download PDF button
     document.getElementById('download-pdf-btn').addEventListener('click', generatePDF);
 
-    // Add browser compatibility layer for window.api if needed
-    if (!window.api) {
-      console.log('Running in browser mode - using localStorage API fallback');
-      window.api = {
-        getProducts: async () => {
-          return JSON.parse(localStorage.getItem('products') || '[]');
-        },
-        addProduct: async (product) => {
-          const products = JSON.parse(localStorage.getItem('products') || '[]');
-          const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-          const newProduct = { ...product, id: newId };
-          products.push(newProduct);
-          localStorage.setItem('products', JSON.stringify(products));
-          return newProduct;
-        },
-        updateProduct: async (id, updates) => {
-          const products = JSON.parse(localStorage.getItem('products') || '[]');
-          const index = products.findIndex(p => p.id === id);
-          if (index !== -1) {
-            products[index] = { ...products[index], ...updates };
-            localStorage.setItem('products', JSON.stringify(products));
-          }
-          return { success: true };
-        },
-        deleteProduct: async (id) => {
-          const products = JSON.parse(localStorage.getItem('products') || '[]');
-          const filtered = products.filter(p => p.id !== id);
-          localStorage.setItem('products', JSON.stringify(filtered));
-          return { success: true };
-        }
-      };
-    }
-
     // Function to broadcast product updates to other pages
     function broadcastProductUpdate(action, product) {
       // Create a custom event that can be listened to by other pages
@@ -558,11 +525,7 @@
       // Dispatch the event to window for local updates
       window.dispatchEvent(event);
 
-      // Also store latest version in sessionStorage for cross-page updates
-      const timestamp = new Date().getTime();
-      sessionStorage.setItem('product-update-timestamp', timestamp.toString());
-      sessionStorage.setItem('product-update-action', action);
-      sessionStorage.setItem('product-update-data', JSON.stringify(product));
+      // Socket.io will handle cross-page updates automatically
     }
 
     // Load products from database
@@ -650,7 +613,7 @@
 
     // View product handler with modal
     function handleViewProduct(e) {
-      const productId = parseInt(e.target.dataset.id);
+      const productId = e.target.dataset.id;
       const product = products.find(p => p.id === productId);
       if (product) {
         console.log('Viewing product:', product);
@@ -674,7 +637,7 @@
 
     // Edit product handler
     function handleEditProduct(e) {
-      const productId = parseInt(e.target.dataset.id);
+      const productId = e.target.dataset.id;
       const product = products.find(p => p.id === productId);
 
       if (product) {
@@ -702,11 +665,17 @@
 
     // Delete product handler
     async function handleDeleteProduct(e) {
-      const productId = parseInt(e.target.dataset.id);
+      const productId = e.target.dataset.id;
+      const product = products.find(p => p.id === productId);
+      const productName = product ? product.name : 'Unknown';
 
-      if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
         try {
-          await window.api.deleteProduct(productId);
+          const result = await window.api.deleteProduct(productId);
+          if (result) {
+            alert(`Product "${productName}" has been deleted successfully!`);
+          }
+          // Result from deleteProduct (use result if needed)
           broadcastProductUpdate('delete', { id: productId });
           await loadProducts(); // Refresh product list
         } catch (error) {
@@ -769,7 +738,7 @@
         if (productId) {
           // Update existing product
           console.log('Updating product with ID:', productId);
-          updatedProduct = await window.api.updateProduct(parseInt(productId), productData);
+          updatedProduct = await window.api.updateProduct(productId, productData);
           console.log('Updated product result:', updatedProduct);
 
           // Close modal after updating
@@ -850,6 +819,23 @@
     // Start application by loading products and suppliers
     loadSuppliers();
     loadProducts();
+
+    // Listen for real-time data syncs from MongoDB
+    window.api.onDataSync((event, changeEvent) => {
+      console.log('📡 Product data sync received:', changeEvent);
+      
+      // Reload products if products collection changed
+      if (changeEvent.collection === 'products') {
+        console.log('🔄 Reloading products from sync event...');
+        loadProducts();
+      }
+      
+      // Also reload if suppliers changed (affects product display)
+      if (changeEvent.collection === 'vendors') {
+        console.log('🔄 Reloading suppliers from sync event...');
+        loadSuppliers();
+      }
+    });
   </script>
 </body>
 

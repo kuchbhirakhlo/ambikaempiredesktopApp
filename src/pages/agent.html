@@ -494,7 +494,7 @@
 
     // View agent handler with modal
     function handleViewAgent(e) {
-      const agentId = parseInt(e.target.dataset.id);
+      const agentId = e.target.dataset.id;
       const agent = agents.find(a => a.id === agentId);
       
       if (agent) {
@@ -510,7 +510,7 @@
 
     // Edit agent handler
     function handleEditAgent(e) {
-      const agentId = parseInt(e.target.dataset.id);
+      const agentId = e.target.dataset.id;
       const agent = agents.find(a => a.id === agentId);
       
       if (agent) {
@@ -530,15 +530,22 @@
     
     // Delete agent handler
     async function handleDeleteAgent(e) {
-      const agentId = parseInt(e.target.dataset.id);
+      const agentId = e.target.dataset.id;
+      const agent = agents.find(a => a.id === agentId);
+      const agentName = agent ? agent.name : 'Unknown';
       
-      if (confirm('Are you sure you want to delete this agent? This action cannot be undone.')) {
+      if (confirm(`Are you sure you want to delete ${agentName}? This action cannot be undone.`)) {
         try {
-          await window.api.deleteAgent(agentId);
-          loadAgents();
+          const result = await window.api.deleteAgent(agentId);
+          if (result) {
+            alert(`Agent "${agentName}" has been deleted successfully!`);
+            loadAgents();
+          } else {
+            alert(`Failed to delete agent "${agentName}". Please try again.`);
+          }
         } catch (error) {
           console.error('Error deleting agent:', error);
-          alert('Failed to delete agent. Please try again.');
+          alert(`Error deleting agent "${agentName}": ${error.message}`);
         }
       }
     }
@@ -578,7 +585,7 @@
       try {
         if (agentId) {
           // Update existing agent
-          await window.api.updateAgent(parseInt(agentId), agentData);
+          await window.api.updateAgent(agentId, agentData);
           // Close modal after updating
           document.getElementById('agent-modal').style.display = 'none';
         } else {
@@ -625,6 +632,17 @@
 
     // Initial render
     loadAgents();
+
+    // Listen for real-time data syncs from MongoDB
+    window.api.onDataSync((event, changeEvent) => {
+      console.log('📡 Agent data sync received:', changeEvent);
+      
+      // Reload agents if agents collection changed
+      if (changeEvent.collection === 'agents') {
+        console.log('🔄 Reloading agents from sync event...');
+        loadAgents();
+      }
+    });
   </script>
 </body>
 

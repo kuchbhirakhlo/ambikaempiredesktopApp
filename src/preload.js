@@ -70,8 +70,13 @@ contextBridge.exposeInMainWorld('api', {
 
   // MongoDB Sync API
   getSyncStatus: () => ipcRenderer.invoke('get-sync-status'),
+  getDataSummary: () => ipcRenderer.invoke('get-data-summary'),
+  compareDataSummaries: (local, remote) => ipcRenderer.invoke('compare-data-summaries', local, remote),
   setSyncEnabled: (enabled) => ipcRenderer.invoke('set-sync-enabled', enabled),
   testMongoDBConnection: () => ipcRenderer.invoke('test-mongodb-connection'),
   syncToMongoDB: () => ipcRenderer.invoke('sync-to-mongodb'),
-  syncFromMongoDB: () => ipcRenderer.invoke('sync-from-mongodb')
+  syncFromMongoDB: () => ipcRenderer.invoke('sync-from-mongodb'),
+
+  // Real-time data sync listener - uses MongoDB change streams
+  onDataSync: (callback) => ipcRenderer.on('data-sync', callback)
 }); 

@@ -360,54 +360,12 @@
           }
         });
 
-        // Listen for custom inventory-update events from same window
-        window.addEventListener('inventory-update', function (event) {
-          console.log('Direct inventory update event received:', event.detail);
-          loadInventory();
-        });
-
-        // Listen for real-time inventory updates from other pages
-        window.addEventListener('storage', function (event) {
-          console.log('Storage event detected in inventory.html:', event.key);
-
-          // Handle different types of inventory updates
-          if (event.key === 'inventory-update-timestamp' ||
-            event.key === 'inventory-update-force' ||
-            event.key === 'product-update-timestamp' ||
-            event.key === 'order-update-timestamp' ||
-            event.key === 'inventory-force-refresh' ||
-            event.key === 'inventory-trigger-refresh') {
-
-            console.log('Detected inventory/product/order changes, refreshing data');
-
-            // Disable the refresh button during refresh to prevent multiple clicks
-            const refreshBtn = document.getElementById('refresh-inventory-btn');
-            if (refreshBtn) {
-              refreshBtn.disabled = true;
-              refreshBtn.textContent = "Refreshing...";
-            }
-
-            // Add a slight delay to ensure all events are processed
-            setTimeout(async () => {
-              try {
-                await loadInventory();
-                console.log('Inventory data refreshed successfully');
-
-                // Reset the refresh button
-                if (refreshBtn) {
-                  refreshBtn.disabled = false;
-                  refreshBtn.textContent = "🔄 Refresh";
-                }
-              } catch (error) {
-                console.error('Error refreshing inventory data:', error);
-
-                // Reset the refresh button
-                if (refreshBtn) {
-                  refreshBtn.disabled = false;
-                  refreshBtn.textContent = "🔄 Refresh";
-                }
-              }
-            }, 100);
+        // MongoDB real-time sync handled via change streams
+        // Listen for MongoDB data sync updates
+        window.api?.onDataSync?.((data) => {
+          if (data.collection === 'inventory') {
+            console.log('Inventory updated from MongoDB:', data);
+            loadInventory();
           }
         });
       } catch (error) {
@@ -425,10 +383,6 @@
         console.log("Successfully loaded inventory data with", inventory.length, "items");
 
         // Debug - log first few items to verify data
-        if (inventory.length > 0) {
-          console.log("Sample inventory items:", inventory.slice(0, 3));
-        }
-
         // Update the UI with the new data
         updateStockSummary();
         filterInventory();
@@ -438,20 +392,6 @@
         if (lastRefreshElement) {
           const now = new Date();
           lastRefreshElement.textContent = now.toLocaleTimeString();
-        }
-
-        // Store timestamp of last refresh
-        localStorage.setItem('inventory-last-refresh', Date.now().toString());
-
-        // Acknowledge that we've processed the force refresh if it exists
-        if (localStorage.getItem('inventory-force-refresh')) {
-          console.log("Processed forced refresh request");
-          // Don't remove it as other instances might still need it
-        }
-
-        if (localStorage.getItem('inventory-trigger-refresh')) {
-          console.log("Processed inventory trigger refresh");
-          // Don't remove it as other instances might still need it
         }
 
         return true; // Signal successful loading

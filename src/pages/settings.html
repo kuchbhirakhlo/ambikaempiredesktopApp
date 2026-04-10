@@ -174,7 +174,7 @@
               </h5>
             </div>
             <div class="card-body">
-              <p class="text-muted">Keep your data synchronized between your local application and the cloud database.</p>
+              <p class="text-muted">Synchronize data between your application and MongoDB cloud database in real-time. All data is stored exclusively in MongoDB.</p>
               
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="form-check form-switch">
@@ -188,10 +188,10 @@
               
               <div class="action-buttons">
                 <button id="sync-to-mongodb" class="btn btn-success sync-button">
-                  Upload Data
+                  Verify Upload Sync
                 </button>
                 <button id="sync-from-mongodb" class="btn btn-info sync-button">
-                  Download Data
+                  Refresh Data Sync
                 </button>
               </div>
 
@@ -244,7 +244,7 @@
               </div>
               <div class="system-info-item">
                 <div class="system-info-label">Data Storage</div>
-                <div class="system-info-value">Local SQLite + Cloud</div>
+                <div class="system-info-value">MongoDB Cloud</div>
               </div>
             </div>
           </div>
@@ -261,15 +261,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded');
       
-      // Don't restrict to admin for testing
-      /*
-      // Only allow access to this page for admin users
-      const userRole = localStorage.getItem('userRole');
-      if (userRole !== 'admin') {
-        window.location.href = './dashboard.html';
-        return;
-      }
-      */
+      // TODO: Implement proper authentication check for admin access
 
       // Back link functionality
       document.getElementById('back-link').addEventListener('click', function(e) {
@@ -375,7 +367,7 @@
           syncFromMongoButton.disabled = true;
           
           syncStatus.classList.remove('d-none', 'status-success', 'status-error');
-          syncStatus.innerHTML = '<p>Uploading data to cloud database...</p>';
+          syncStatus.innerHTML = '<p>Verifying data synchronization with MongoDB...</p>';
           syncStatus.classList.add('status-info');
           
           syncResults.classList.add('d-none');
@@ -413,9 +405,6 @@
       // Sync from MongoDB button
       syncFromMongoButton.addEventListener('click', async () => {
         console.log('Download data button clicked');
-        if (!confirm('This will overwrite your local database with data from the cloud. Continue?')) {
-          return;
-        }
         
         try {
           // Disable buttons during sync
@@ -423,7 +412,7 @@
           syncFromMongoButton.disabled = true;
           
           syncStatus.classList.remove('d-none', 'status-success', 'status-error');
-          syncStatus.innerHTML = '<p>Downloading data from cloud database...</p>';
+          syncStatus.innerHTML = '<p>Refreshing data synchronization from MongoDB...</p>';
           syncStatus.classList.add('status-info');
           
           syncResults.classList.add('d-none');
