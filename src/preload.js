@@ -78,5 +78,32 @@ contextBridge.exposeInMainWorld('api', {
   syncFromMongoDB: () => ipcRenderer.invoke('sync-from-mongodb'),
 
   // Real-time data sync listener - uses MongoDB change streams
-  onDataSync: (callback) => ipcRenderer.on('data-sync', callback)
+  onDataSync: (callback) => ipcRenderer.on('data-sync', callback),
+
+  // Socket.io API
+  socketEmit: (event, data) => ipcRenderer.invoke('socket-emit', event, data),
+  socketStatus: () => ipcRenderer.invoke('socket-status'),
+
+  // Socket event listeners - register callbacks
+  onSocketOrderCreated: (callback) => ipcRenderer.on('socket-order-created', (event, data) => callback(data)),
+  onSocketOrderUpdated: (callback) => ipcRenderer.on('socket-order-updated', (event, data) => callback(data)),
+  onSocketInventoryUpdated: (callback) => ipcRenderer.on('socket-inventory-updated', (event, data) => callback(data)),
+  onSocketStockAlert: (callback) => ipcRenderer.on('socket-stock-alert', (event, data) => callback(data)),
+  onSocketCustomerAdded: (callback) => ipcRenderer.on('socket-customer-added', (event, data) => callback(data)),
+  onSocketCustomerUpdated: (callback) => ipcRenderer.on('socket-customer-updated', (event, data) => callback(data)),
+  onSocketVendorAdded: (callback) => ipcRenderer.on('socket-vendor-added', (event, data) => callback(data)),
+  onSocketVendorUpdated: (callback) => ipcRenderer.on('socket-vendor-updated', (event, data) => callback(data)),
+  onSocketProductAdded: (callback) => ipcRenderer.on('socket-product-added', (event, data) => callback(data)),
+  onSocketProductUpdated: (callback) => ipcRenderer.on('socket-product-updated', (event, data) => callback(data)),
+  onSocketEstimateCreated: (callback) => ipcRenderer.on('socket-estimate-created', (event, data) => callback(data)),
+  onSocketEstimateUpdated: (callback) => ipcRenderer.on('socket-estimate-updated', (event, data) => callback(data)),
+  onSocketTransactionRecorded: (callback) => ipcRenderer.on('socket-transaction-recorded', (event, data) => callback(data)),
+  onSocketAgentAdded: (callback) => ipcRenderer.on('socket-agent-added', (event, data) => callback(data)),
+  onSocketAgentUpdated: (callback) => ipcRenderer.on('socket-agent-updated', (event, data) => callback(data)),
+  onSocketUserActivity: (callback) => ipcRenderer.on('socket-user-activity', (event, data) => callback(data)),
+  onSocketSyncStatusUpdate: (callback) => ipcRenderer.on('socket-sync-status-update', (event, data) => callback(data)),
+  onSocketClientStatus: (callback) => ipcRenderer.on('socket-client-status', (event, data) => callback(data)),
+
+  // Send socket events to main process
+  sendSocketEvent: (eventName, data) => ipcRenderer.send('socket-event-from-renderer', { eventName, data })
 }); 

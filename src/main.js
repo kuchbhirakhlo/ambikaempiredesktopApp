@@ -689,3 +689,42 @@ ipcMain.handle('sync-from-mongodb', async () => {
     };
   }
 });
+
+// Socket.io handlers - these will be called from renderer via socket-client.js
+let socketCallbacks = {};
+
+ipcMain.handle('socket-emit', async (event, eventName, data) => {
+  // Forward to renderer process - socket-client.js will handle this
+  // Since socket runs in renderer, we need to send back to renderer
+  // Actually, since socket is in renderer, this should be handled there
+  // For now, just return success
+  return { success: true };
+});
+
+ipcMain.handle('socket-status', async () => {
+  // This will be overridden by socket-client.js in renderer
+  return { connected: false, message: 'Socket not initialized' };
+});
+
+// Register socket event callbacks
+ipcMain.handle('register-socket-callback', (event, eventName, callbackId) => {
+  // Store callback IDs for socket events
+  if (!socketCallbacks[eventName]) {
+    socketCallbacks[eventName] = [];
+  }
+  socketCallbacks[eventName].push(callbackId);
+});
+
+// Send socket events to renderer
+function sendSocketEvent(eventName, data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    // Send to renderer with specific event channel
+    const channelName = `socket-${eventName.replace(/-/g, '-')}`;
+    mainWindow.webContents.send(channelName, data);
+  }
+}
+
+// Handle socket events from renderer
+ipcMain.on('socket-event-from-renderer', (event, { eventName, data }) => {
+  sendSocketEvent(eventName, data);
+});
