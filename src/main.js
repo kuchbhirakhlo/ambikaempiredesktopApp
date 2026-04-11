@@ -1,15 +1,13 @@
 // Check if we're running in Electron
-if (typeof require !== 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.electron) {
-  // Running in Electron main process
-  var electron = require('electron');
-  var app = electron.app;
-  var BrowserWindow = electron.BrowserWindow;
-  var ipcMain = electron.ipcMain;
-  console.log('Electron app loaded:', typeof app);
+if (typeof process !== 'undefined' && process.versions && process.versions.electron) {
+  console.log('Running in Electron environment');
 } else {
   console.error('Not running in Electron environment');
   process.exit(1);
 }
+
+// Electron APIs are available globally in main process
+console.log('Using global Electron APIs');
 const path = require('path');
 const getDatabase = require('./utils/database');
 const mongoSync = require('./utils/mongodb-sync');

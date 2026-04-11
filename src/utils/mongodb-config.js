@@ -10,7 +10,7 @@ require('dotenv').config();
 const mongoConfig = {
   connectionUrl: process.env.MONGODB_URI || "mongodb+srv://avisr00:dRwTaC0WtyksZ8xb@cluster0.hlywxqi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
   
-  dbName: "vendor_management",
+  dbName: "test",
   
   tables: [
     'users', 'vendors', 'products', 'inventory', 'orders', 
